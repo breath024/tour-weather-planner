@@ -168,13 +168,14 @@
 			var c = courseNo[s.id];
 			var it = addItem('spot', s, function (v) { return TWMap.mpill(v, c ? c.n : 0); }, c ? 1000 : 0, c ? '코스 ' + c.n + '번 · ' + c.time : '');
 			it.keep = !!c; // 하루 코스에 든 곳은 분류로 거르지 않는다
+			it.cn = c ? c.n : 0;
 		});
 		// 분류로 거른 목록이어도 하루 코스 번호 마커는 그대로 보인다 (코스는 거르기 전 전체 기준)
 		var inSpots = {};
 		spots.forEach(function (s) { inSpots[s.id] = true; });
 		course.forEach(function (c) {
 			if (inSpots[c.id]) return;
-			addItem('course', c, function (v) { return TWMap.mpill(v, c.n); }, 1000, '코스 ' + c.n + '번 · ' + c.time);
+			addItem('course', c, function (v) { return TWMap.mpill(v, c.n); }, 1000, '코스 ' + c.n + '번 · ' + c.time).cn = c.n;
 		});
 		// 이 날 열리는 축제 · 행사
 		events.forEach(function (e) {
@@ -210,8 +211,13 @@
 		}
 		TWMap.plan = { setCat: setCat };
 
-		// ----- 겹침 정리: 하루 코스 번호 마커가 먼저 자리를 잡고, 겹치는 날씨 이름표는 작은 점으로 접는다 -----
+		// ----- 겹침 정리 -----
+		// 1) 하루 코스 번호(1, 2, 3 … 순서)가 먼저 자리를 잡는다. 코스끼리 겹치면 날씨를 빼고 번호만 남기고,
+		//    그래도 겹치면 이름표를 비어 있는 옆자리(위 · 오른쪽 · 왼쪽 …)로 조금 옮긴다 → 코스 번호는 늘 다 보인다.
+		// 2) 그다음 행사, 나머지 날씨 이름표 순. 이미 놓인 것과 겹치면 작은 점으로 접는다.
 		var declutterTimer = 0;
+		function boxOf(r, ox, oy) { return { l: r.left + ox - 2, r: r.right + ox + 2, t: r.top + oy - 2, b: r.bottom + oy + 2 }; }
+		function hits(b, placed) { return placed.some(function (q) { return b.l < q.r && b.r > q.l && b.t < q.b && b.b > q.t; }); }
 		function declutter() {
 			var pills = [];
 			items.forEach(function (it) {
@@ -219,21 +225,30 @@
 				if (!w) return;
 				w.classList.remove('collapsed', 'compact');
 				var p = w.querySelector('.mpill');
-				if (p) pills.push({ it: it, w: w, p: p, first: it.keep || it.kind === 'course' ? 0 : (it.kind === 'fest' ? 1 : 2) });
+				if (!p) return;
+				p.style.removeProperty('--nx');
+				p.style.removeProperty('--ny');
+				pills.push({ it: it, w: w, p: p, first: it.cn ? 0 : (it.kind === 'fest' ? 1 : 2) });
 			});
-			pills.sort(function (a, b) { return a.first - b.first; }); // 안정 정렬이 아니어도 우선순위만 맞으면 된다
+			pills.sort(function (a, b) { return (a.first - b.first) || ((a.it.cn || 0) - (b.it.cn || 0)); });
 			var placed = [];
 			pills.forEach(function (x) {
 				var r = x.p.getBoundingClientRect();
-				var box0 = { l: r.left - 2, r: r.right + 2, t: r.top - 2, b: r.bottom + 2 };
-				var hit = placed.some(function (q) { return box0.l < q.r && box0.r > q.l && box0.t < q.b && box0.b > q.t; });
-				if (hit && x.first > 0) { x.w.classList.add('collapsed'); return; }
-				if (hit) { // 코스 번호끼리 겹치면 번호만 남긴다 (코스 번호는 늘 보인다)
-					x.w.classList.add('compact');
-					r = x.p.getBoundingClientRect();
-					box0 = { l: r.left - 2, r: r.right + 2, t: r.top - 2, b: r.bottom + 2 };
+				var b0 = boxOf(r, 0, 0);
+				if (!hits(b0, placed)) { placed.push(b0); return; }
+				if (x.first > 0) { x.w.classList.add('collapsed'); return; }
+				x.w.classList.add('compact'); // 코스 번호: 번호만 남기고
+				r = x.p.getBoundingClientRect();
+				var dx = r.width + 4, dy = r.height + 4;
+				var tries = [[0, 0], [0, -dy], [dx, 0], [-dx, 0], [dx, -dy], [-dx, -dy], [0, -2 * dy], [dx, dy], [-dx, dy]];
+				for (var i = 0; i < tries.length; i++) {
+					var b1 = boxOf(r, tries[i][0], tries[i][1]);
+					if (!hits(b1, placed) || i === tries.length - 1) {
+						if (i > 0) { x.p.style.setProperty('--nx', tries[i][0] + 'px'); x.p.style.setProperty('--ny', tries[i][1] + 'px'); }
+						placed.push(b1);
+						return;
+					}
 				}
-				placed.push(box0);
 			});
 		}
 		function scheduleDeclutter() {

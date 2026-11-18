@@ -199,9 +199,10 @@ form.course-add { margin: 0; }
 .warn-body > * + * { margin-top: 6px; }
 .warn-now { font-size: var(--fs-4); }
 .warn-pre { font-size: var(--fs-3); }
-.warn-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.warn-item { max-width: 100%; padding: 1px var(--s2); border-radius: var(--r1); background: rgba(255, 255, 255, .75); font-size: var(--fs-3); font-weight: 600; overflow-wrap: anywhere; }
-.warn-item.major { background: var(--bad-ink); color: #fff; font-weight: 700; }
+.warn-list { display: flex; flex-wrap: wrap; gap: 2px var(--s4); }
+/* 특보 문장은 띠 안의 글자로만 (흰 상자를 또 두르지 않는다) */
+.warn-item { max-width: 100%; font-size: var(--fs-3); font-weight: 600; overflow-wrap: anywhere; }
+.warn-item.major { color: var(--bad-ink); font-weight: 700; }
 .warn-tip { font-size: var(--fs-2); }
 .warn-src { font-size: var(--fs-1); color: var(--sub); }
 .warn-wrap:empty { display: none; }
@@ -749,6 +750,8 @@ form.course-add { margin: 0; }
 .pill-wrap.collapsed .mpill > *, .pill-wrap.collapsed .mpill::before, .pill-wrap.collapsed .mpill::after { display: none; }
 .pill-wrap.compact .mpill > :not(.n) { display: none; }
 .pill-wrap.compact .mpill { padding: 2px; }
+/* 겹친 코스 번호를 옆자리로 옮길 때(maps.js 겹침 정리). transform 과 따로 더해진다 */
+.mpill { translate: var(--nx, 0px) var(--ny, 0px); }
 .mnum { background: var(--navy); }
 .mnum.warn { background: var(--warn-ink); }
 
