@@ -177,7 +177,7 @@
 							<details class="stop-sc gk-${fn:escapeXml(st.score.gradeKey)}${empty st.score.chips ? ' nochips' : ''}">
 								<summary class="stop-sc-head">
 									<c:choose>
-										<c:when test="${st.score.available}"><span class="sr-only">여행 지수 </span><b class="n">${st.score.score}</b><span class="u">점</span><span class="g">${fn:escapeXml(st.score.grade)}</span><c:if test="${st.score.uncertain}"><span class="ds-unc" title="${fn:escapeXml(st.score.uncertainNote)}">불확실<span class="sr-only"> (<c:out value="${st.score.uncertainNote}"/>)</span></span></c:if></c:when>
+										<c:when test="${st.score.available}"><span class="sr-only">여행 지수 </span><span class="sc-fig"><b class="n">${st.score.score}</b><span class="u">점</span><span class="g">${fn:escapeXml(st.score.grade)}</span></span><c:if test="${st.score.uncertain}"><span class="ds-unc" title="${fn:escapeXml(st.score.uncertainNote)}">불확실<span class="sr-only"> (<c:out value="${st.score.uncertainNote}"/>)</span></span></c:if></c:when>
 										<c:otherwise><span class="g">여행 지수 자료 없음</span></c:otherwise>
 									</c:choose>
 									<c:if test="${not empty st.crowdText}"><span class="crowdchip"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><c:out value="${st.crowdText}"/></span></c:if>

@@ -135,7 +135,7 @@
 						</div>
 						<div class="wx-rec">
 							<c:if test="${not empty regionScore and regionScore.available}"><a class="rhero-score" href="#scoreSec"><span class="sr-only">여행 지수 </span><b>${regionScore.score}</b><span class="u">점</span><span class="g">${fn:escapeXml(regionScore.grade)}</span><span class="more">근거 보기<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></span></a></c:if>
-							<p class="rec-title"><c:out value="${rec.title}"/></p>
+							<p class="rec-title"><c:out value="${fn:replace(rec.title, '·', ' · ')}"/></p>
 							<p class="rec-reason"><c:out value="${rec.reason}"/></p>
 							<ul class="chips">
 								<li><svg class="ic" aria-hidden="true"><use href="#i-shirt"/></svg><c:out value="${rec.clothes}"/></li>
@@ -158,7 +158,7 @@
 							</div>
 						</c:forEach>
 					</div></c:if>
-					<p class="rhero-src">기상청 <c:choose><c:when test="${fn:length(weather.baseDate) == 8 and fn:length(weather.baseTime) == 4}">${fn:substring(weather.baseDate, 4, 6)}/${fn:substring(weather.baseDate, 6, 8)} ${fn:substring(weather.baseTime, 0, 2)}:${fn:substring(weather.baseTime, 2, 4)}</c:when><c:otherwise>${fn:escapeXml(weather.baseDate)} ${fn:escapeXml(weather.baseTime)}</c:otherwise></c:choose> 발표 · 지역 가운데 기준<c:if test="${weather.partial}"> · 오늘은 지금 이후 시간만</c:if><c:if test="${not empty heroName}"> · 사진 <c:out value="${heroName}"/></c:if></p>
+					<p class="rhero-src"><span>기상청 <c:choose><c:when test="${fn:length(weather.baseDate) == 8 and fn:length(weather.baseTime) == 4}">${fn:substring(weather.baseDate, 4, 6)}/${fn:substring(weather.baseDate, 6, 8)} ${fn:substring(weather.baseTime, 0, 2)}:${fn:substring(weather.baseTime, 2, 4)}</c:when><c:otherwise>${fn:escapeXml(weather.baseDate)} ${fn:escapeXml(weather.baseTime)}</c:otherwise></c:choose> 발표</span><span>지역 가운데 기준</span><c:if test="${weather.partial}"><span>오늘은 지금 이후 시간만</span></c:if><c:if test="${not empty heroName}"><span>사진 <c:out value="${heroName}"/></span></c:if></p>
 				</c:when>
 				<c:otherwise>
 					<div class="rhero-wx">
@@ -226,7 +226,7 @@
 			<section class="block daystrip" id="dayStrip" aria-labelledby="dsTitle">
 				<div class="block-head">
 					<h2 id="dsTitle">언제 가면 좋을까요 <small>오늘~10일 뒤</small></h2>
-					<p>막대가 길수록 여행 지수가 높아요. 점선 오른쪽은 중기예보(오전 · 오후)예요.</p>
+					<p>막대가 길수록 여행 지수가 높아요. 점선 오른쪽은 중기예보(오전&nbsp;·&nbsp;오후)예요.</p>
 				</div>
 				<c:choose>
 					<c:when test="${not empty bestDay}">
@@ -239,7 +239,7 @@
 						</c:url>
 						<div class="best-call gk-${fn:escapeXml(bestDay.score.gradeKey)}">
 							<div class="bc-text">
-								<p>가장 좋은 날은 <b>${fn:escapeXml(bestDay.dayName)} ${fn:escapeXml(bestDay.dateLabel)}</b>
+								<p>가장 좋은 날은 <b>${fn:replace(fn:escapeXml(bestDay.dayName), '일뒤', '일 뒤')} ${fn:escapeXml(bestDay.dateLabel)}</b>
 									<span class="bc-score">${bestDay.score.score}점 · ${fn:escapeXml(bestDay.score.grade)}</span></p>
 								<p class="note">비교에 쓴 근거는 <c:out value="${bestDay.compareBasis}"/>이에요. 비교 점수 ${bestDay.compareScore}점<c:if test="${bestDay.uncertain}"> · 이날은 신뢰도가 낮아요(<c:out value="${bestDay.uncertainNote}"/>)</c:if></p>
 							</div>
@@ -266,7 +266,7 @@
 						<li class="ds ${d.selected ? 'on' : ''} ${d.best ? 'best' : ''} ${d.source == 'MID' and prevSrc != 'MID' ? 'seam' : ''} gk-${d.hasScore ? fn:escapeXml(d.score.gradeKey) : 'none'}">
 							<a href="${fn:escapeXml(dsHref)}" ${d.selected ? 'aria-current="page"' : ''}>
 								<c:if test="${d.best}"><span class="ds-best">가장 좋은 날</span></c:if>
-								<span class="ds-day">${fn:escapeXml(d.dayName)}</span>
+								<span class="ds-day">${fn:replace(fn:escapeXml(d.dayName), '일뒤', '일 뒤')}</span>
 								<span class="ds-date">${fn:escapeXml(d.dateLabel)}</span>
 								<c:choose>
 									<c:when test="${d.source != 'NONE'}">
@@ -379,7 +379,7 @@
 						<div class="state soft">
 							<svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>
 							<div>
-								<p><c:out value="${dayPlan.message}"/></p>
+								<p>${fn:replace(fn:escapeXml(dayPlan.message), '하루 코스', '하루&nbsp;코스')}</p>
 								<c:if test="${dayPlan.tooLate}">
 									<p class="state-links"><a class="btn btn-coral" href="plan?area=${fn:escapeXml(selArea)}&amp;sigungu=${fn:escapeXml(selSigungu)}&amp;day=${selDay + 1}&amp;keyword=${fn:escapeXml(keyword)}">내일 코스 보기</a></p>
 								</c:if>

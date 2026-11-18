@@ -54,10 +54,10 @@
 						<c:when test="${spot.placeUnknown}"><span class="badge"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>실내 · 야외 미확인</span></c:when>
 						<c:otherwise><span class="badge ${spot.indoor ? 'in' : 'out'}"><svg class="ic" aria-hidden="true"><use href="${spot.indoor ? '#i-museum' : '#i-tree'}"/></svg>${spot.indoor ? '실내' : '실외'}</span></c:otherwise>
 					</c:choose>
-					<span class="type">${fn:escapeXml(spot.typeName)}</span>
+					<span class="type">${fn:replace(fn:escapeXml(spot.typeName), '·', ' · ')}</span>
 				</p>
 				<h1><c:out value="${spot.title}"/></h1>
-				<p class="addr"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg><c:out value="${spot.addr}"/></p>
+				<p class="addr"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>${fn:replace(fn:escapeXml(spot.addr), '-', '-&#8288;')}</p>
 				<ul class="contact">
 					<c:if test="${not empty spot.tel}"><li><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><c:out value="${spot.tel}"/></li></c:if>
 					<c:if test="${not empty spot.homepage}"><li><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><a href="${fn:escapeXml(spot.homepage)}" target="_blank" rel="noopener noreferrer">홈페이지</a></li></c:if>
@@ -95,7 +95,7 @@
 			<noscript><button type="submit" class="btn btn-ghost">보기</button></noscript>
 		</form>
 		<c:if test="${not empty bestTime}">
-			<p class="best-time"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span><b>가기 좋은 시간</b><c:out value="${bestTime}"/></span></p>
+			<p class="best-time"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span><b>가기 좋은 시간</b>${fn:replace(fn:escapeXml(bestTime), '–', '&#8288;–&#8288;')}</span></p>
 		</c:if>
 	</div>
 

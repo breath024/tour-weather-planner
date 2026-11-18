@@ -170,7 +170,7 @@ form.course-add { margin: 0; }
 .alert { display: flex; align-items: flex-start; gap: var(--s3); margin: var(--s4) 0; padding: var(--s3) var(--s4); border-radius: var(--r3); background: var(--bad-bg); color: var(--bad-ink); border: 1px solid #ecc9c1; font-size: var(--fs-3); }
 .alert.ok { background: var(--green-soft); color: var(--green); border-color: #bfe0cf; }
 .alert.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: #ecd9ab; }
-.alert .ic { margin-top: 2px; }
+.alert .ic { width: 22px; height: 22px; margin-top: 1px; } /* 특보 띠 아이콘과 같은 크기 · 글자 시작선 */
 .alert a { font-weight: 700; }
 
 .state { display: flex; gap: var(--s4); align-items: flex-start; margin: var(--s5) 0; padding: var(--s5); border-radius: var(--r3); background: #fff; border: 1px solid var(--line); }
@@ -212,7 +212,9 @@ form.course-add { margin: 0; }
 .block h2, .d-main h2, .side-h { font-size: var(--fs-6); font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; }
 .block h2 small { font-size: var(--fs-3); font-weight: 500; color: var(--sub); letter-spacing: 0; margin-left: 6px; }
 .block-head { margin-bottom: var(--s4); }
-.block-head p { color: var(--sub); font-size: var(--fs-3); margin-top: 2px; }
+.block-head p { color: var(--sub); font-size: var(--fs-3); margin-top: 2px; text-wrap: balance; }
+/* 끝에 낱말 하나만 남는 줄을 줄인다 */
+p, .addr, .note, .spread { text-wrap: pretty; }
 
 /* ---------- 카드 + 사진 틀 + 사진 없는 자리 ---------- */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--s4); }
@@ -221,7 +223,7 @@ form.course-add { margin: 0; }
 .scard-link { display: block; flex: 1; text-decoration: none; color: inherit; }
 .scard-body { padding: var(--s3) var(--s4) var(--s1); }
 .scard .meta { font-size: var(--fs-2); font-weight: 500; color: var(--sub); }
-.scard h3 { font-size: var(--fs-5); font-weight: 700; letter-spacing: -0.02em; line-height: 1.35; margin-top: 2px; }
+.scard h3 { font-size: var(--fs-5); font-weight: 700; letter-spacing: -0.02em; line-height: 1.35; margin-top: 2px; text-wrap: balance; }
 /* 주소 · 한 줄 팁은 자르지 않고 줄을 바꿔 다 보여 준다(한글은 낱말 단위로 줄바꿈) */
 .scard .addr { font-size: var(--fs-2); color: var(--sub); margin-top: var(--s1); }
 .scard .tip { font-size: var(--fs-2); margin-top: var(--s2); padding-top: var(--s2); border-top: 1px solid var(--line); }
@@ -264,7 +266,7 @@ form.course-add { margin: 0; }
 .seg-i input:checked + span i { color: #dfe6f6; }
 .seg-i input:focus-visible + span { outline: 2px solid var(--navy); outline-offset: 1px; }
 .sform .btn { flex: 0 0 auto; min-height: 48px; }
-@media (max-width: 560px) { .sform { padding: var(--s4); } .sform .btn { flex: 1 1 100%; } }
+@media (max-width: 560px) { .sform { padding: var(--s4); } .sform .btn { flex: 1 1 100%; } .sform .f-kw { flex: 1 1 150px; } }
 
 .day-pick { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin: var(--s3) 0; font-size: var(--fs-3); }
 .day-pick label { font-weight: 600; color: var(--ink); }
@@ -387,6 +389,8 @@ form.course-add { margin: 0; }
 #detailMap { height: 300px; }
 #courseMap { height: 520px; }
 .leaflet-container { font-family: inherit; }
+/* 타일 이음매: 기본 plus-lighter 섞기가 소수점 위치의 지도에서 타일 경계에 밝은 줄을 만든다 */
+.leaflet-container img.leaflet-tile { mix-blend-mode: normal; }
 .leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
 .leaflet-popup-close-button { width: 44px !important; height: 44px !important; font-size: 22px !important; line-height: 44px !important; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px var(--s4); align-items: center; padding: var(--s3) var(--s4); font-size: var(--fs-2); color: var(--sub); }
@@ -473,8 +477,9 @@ form.course-add { margin: 0; }
 .home-search { margin-top: var(--s5); }
 .home .sform { padding: 0; border: 0; border-radius: 0; background: none; }
 
-.kmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--s2); }
-.tile { display: flex; align-items: center; min-height: 48px; padding: 0 var(--s4); border-radius: var(--r2); border: 1px solid var(--line-2); background: #fff; color: var(--ink); font-size: var(--fs-3); font-weight: 600; text-decoration: none; }
+.kmap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); }
+@media (min-width: 900px) { .kmap { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.tile { display: flex; align-items: center; min-height: 48px; padding: 0 var(--s3); border-radius: var(--r2); border: 1px solid var(--line-2); background: #fff; color: var(--ink); font-size: var(--fs-3); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .tile:hover { border-color: var(--navy); color: var(--navy); }
 
 .about-list { border-top: 1px solid var(--line); }
@@ -503,14 +508,15 @@ form.course-add { margin: 0; }
 .wx-icon { font-size: 44px; line-height: 1; }
 .wx-temp { font-size: var(--fs-7); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
 .wx-sky { font-size: var(--fs-3); opacity: .92; }
-.wx-rec { flex: 1 1 280px; max-width: 560px; }
+.wx-rec { flex: 1 1 280px; max-width: 720px; }
 .rec-title { font-size: var(--fs-5); font-weight: 700; letter-spacing: -0.02em; }
 .rec-reason { font-size: var(--fs-3); opacity: .92; margin-top: 2px; }
 .chips { display: flex; gap: var(--s1) var(--s4); flex-wrap: wrap; margin-top: var(--s3); }
 .chips li { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-2); }
 .chips .hc .ic { width: 16px; height: 16px; }
 .chips .hc.gr-3, .chips .hc.gr-4, .chips .hc.uv-4, .chips .hc.uv-5 { font-weight: 700; color: #ffd0c6; }
-.rhero-src { font-size: var(--fs-1); color: #cfd8ee; }
+.rhero-src { display: flex; flex-wrap: wrap; gap: 2px var(--s3); font-size: var(--fs-1); color: #cfd8ee; }
+.rhero-src > span { max-width: 100%; }
 /* 결론 먼저: 여행 지수 숫자를 hero 맨 위에 */
 .rhero-score { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s1); min-height: 44px; padding: var(--s1) 0; margin-bottom: 2px; color: #fff; text-decoration: none; }
 .rhero-score b { font-size: var(--fs-7); font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
@@ -541,7 +547,7 @@ form.course-add { margin: 0; }
 	.rhero .chips { margin-top: var(--s2); }
 	.rhero .hour .p { display: none; }
 	.rhero .hour { padding-bottom: var(--s2); }
-	.warnbar { margin: var(--s3) 0; padding: var(--s2) var(--s3); gap: var(--s2); }
+	.warnbar, .alert { margin: var(--s3) 0; padding: var(--s2) var(--s3); gap: var(--s2); }
 	.warn-wrap .warn-list { gap: 4px; }
 	.warn-wrap .warn-item { font-size: var(--fs-2); }
 }
@@ -554,7 +560,8 @@ form.course-add { margin: 0; }
 .warn-more > summary { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; list-style: none; font-size: var(--fs-3); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .warn-more > summary::-webkit-details-marker { display: none; }
 .warn-more > p + p { margin-top: var(--s1); }
-@media (min-width: 761px) { .warnbar { align-items: center; } .warn-ic { margin-top: 0; } }
+@media (max-width: 680px) { .warn-more > summary { margin: -8px 0; } }
+@media (min-width: 761px) { .warnbar { align-items: flex-start; } .warn-ic { margin-top: 1px; } .warnbar:not(.compact) .warn-more > summary { margin: -10px 0; } }
 
 /* ---------- 지역 · 날짜 바꾸기(접힘) + 고정 이동 띠 ---------- */
 .refine-wrap { margin-top: var(--s4); }
@@ -605,8 +612,8 @@ form.course-add { margin: 0; }
 .ds a:hover { border-color: var(--navy); }
 .ds.on a { border: 2px solid var(--navy); padding: 11px 3px 7px; }
 .ds.best.on a { border-color: var(--navy); }
-.ds.seam { margin-left: var(--s2); }
-.ds.seam::before { content: ''; position: absolute; top: 18px; bottom: 8px; margin-left: -9px; border-left: 1px dashed var(--ctl); }
+.ds.seam { margin-left: 0; }
+.ds.seam::before { content: ''; position: absolute; top: 18px; bottom: 8px; margin-left: -5px; border-left: 1px dashed var(--ctl); }
 .ds-best { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 1px var(--s2); border-radius: var(--r1); background: var(--coral); color: #fff; font-size: var(--fs-1); font-weight: 700; white-space: nowrap; }
 .ds-day { font-size: var(--fs-4); font-weight: 700; }
 .ds-date { font-size: var(--fs-1); color: var(--sub); }
@@ -624,7 +631,9 @@ form.course-add { margin: 0; }
 /* 불확실한 날은 칸 오른쪽 위에 별표 하나. 설명은 아래 각주 */
 .ds-list .ds-unc { position: absolute; top: 6px; right: 8px; font-size: var(--fs-3); line-height: 1; }
 .ds-list .ds-unc::before { margin: 0; }
+.ds-list .ds.best .ds-unc { top: 14px; }
 .unc-legend { margin-top: var(--s2); }
+@media (min-width: 681px) { .ds-list { margin-left: -3px; margin-right: -3px; } }
 @keyframes bar-in { from { height: 3px; } }
 @media (prefers-reduced-motion: no-preference) {
 	.ds-bar i { animation: bar-in .6s cubic-bezier(.2, .8, .2, 1) both; }
@@ -633,13 +642,13 @@ form.course-add { margin: 0; }
 /* ---------- 하루 코스: 레일 하나 · 흰 카드 ---------- */
 .timeline { position: relative; }
 .tl-item { position: relative; display: grid; grid-template-columns: 84px minmax(0, 1fr); column-gap: var(--s4); padding-bottom: var(--s3); }
-.tl-item::before { content: ''; position: absolute; left: 91px; top: 18px; bottom: -6px; width: 1px; background: var(--line-2); }
+.tl-item::before { content: ''; position: absolute; left: 91px; top: 18px; bottom: -18px; width: 1px; background: var(--line-2); }
 .tl-item:last-child::before { display: none; }
 /* 점: 실외는 채움, 실내는 속이 빈 고리 */
 .tl-item::after { content: ''; position: absolute; left: 86px; top: 15px; width: 11px; height: 11px; box-sizing: border-box; border-radius: 50%; background: var(--navy); border: 2px solid var(--navy); outline: 3px solid var(--paper); }
 .tl-item.bad::after { background: #fff; }
-.tl-time { padding-top: var(--s2); text-align: right; line-height: 1.3; }
-.tl-time b { display: block; font-size: var(--fs-5); font-weight: 700; }
+.tl-time { padding-top: var(--s2); padding-right: var(--s2); text-align: right; line-height: 1.3; }
+.tl-time b { display: block; font-size: var(--fs-5); font-weight: 700; white-space: nowrap; }
 .tl-time span { font-size: var(--fs-1); color: var(--sub); }
 .tl-time .tl-period { display: block; }
 .tl-card { background: #fff; border: 1px solid var(--line); border-radius: var(--r3); padding: var(--s3) var(--s4); margin-left: var(--s2); }
@@ -657,19 +666,23 @@ form.course-add { margin: 0; }
 .tl-leg { grid-column: 2; display: flex; align-items: center; gap: 6px; margin: 6px 0 0 var(--s5); font-size: var(--fs-2); color: var(--sub); position: relative; }
 .tl-leg::before { content: ''; flex: none; width: 6px; height: 6px; border-right: 1.5px solid var(--sub); border-bottom: 1.5px solid var(--sub); transform: rotate(45deg) translate(-1px, -1px); }
 .tl-sunic { width: 18px; height: 18px; margin-top: var(--s1); color: var(--sub); }
-.tl-sunmark { display: flex; align-items: center; gap: var(--s2); margin: 0 0 var(--s3) 100px; font-size: var(--fs-2); color: var(--sub); }
-.tl-sunmark .ic { width: 18px; height: 18px; }
+.tl-sunmark { position: relative; display: flex; align-items: center; gap: var(--s2); margin: 0 0 var(--s3) 82px; font-size: var(--fs-2); color: var(--sub); }
+/* 일몰 줄에도 레일을 이어 그리고, 아이콘 가운데를 레일에 맞춘다 */
+.tl-sunmark::before { content: ''; position: absolute; left: 9px; top: 0; bottom: calc(-1 * var(--s3) - 22px); width: 1px; background: var(--line-2); }
+.tl-sunmark .ic { position: relative; z-index: 1; width: 18px; height: 18px; background: var(--paper); box-shadow: 0 0 0 3px var(--paper); }
 .tl-sunmark b { margin-right: var(--s1); color: var(--ink); }
+.plan-foot .note { display: block; margin-top: 2px; line-height: 1.5; text-wrap: balance; }
 .plan-foot { display: flex; flex-wrap: wrap; gap: var(--s4) var(--s5); align-items: center; justify-content: space-between; margin-top: var(--s3); padding: var(--s4) var(--s5); background: #fff; border: 1px solid var(--line); border-radius: var(--r3); }
 @media (max-width: 560px) {
-	.tl-item { grid-template-columns: 54px minmax(0, 1fr); column-gap: var(--s3); }
-	.tl-item::before { left: 60px; }
-	.tl-item::after { left: 55px; }
+	.tl-item { grid-template-columns: 58px minmax(0, 1fr); column-gap: var(--s3); }
+	.tl-item::before { left: 66px; }
+	.tl-item::after { left: 61px; }
+	.tl-time { padding-right: 4px; }
 	.tl-time b { font-size: var(--fs-4); }
 	.tl-card { margin-left: var(--s1); padding: var(--s3); }
 	.tl-img { flex-basis: 72px; height: 64px; }
 	.tl-leg { margin-left: var(--s4); }
-	.tl-sunmark { margin-left: 68px; }
+	.tl-sunmark { margin-left: 57px; }
 	.plan-foot .course-add-plan, .plan-foot .btn { width: 100%; }
 }
 
@@ -681,7 +694,8 @@ form.course-add { margin: 0; }
 .planb.risk { margin-top: var(--s2); padding: 0 var(--s3) var(--s1); border: 1px solid var(--blue); border-radius: var(--r2); background: var(--blue-soft); }
 .planb.risk > summary { width: 100%; min-height: 40px; font-size: var(--fs-3); text-decoration: none; color: var(--blue); }
 .tl-card .planb .note { margin: 0; padding-bottom: var(--s2); }
-.planb-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s4); padding-bottom: var(--s3); }
+.tl-card .planb-spot .note { padding-bottom: 0; }
+.planb-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); padding-bottom: var(--s3); }
 .planb-row .planb-spot { flex: 1 1 280px; min-width: 0; }
 .planb-spot { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s2); margin: 0; }
 .planb-spot a { display: inline-flex; align-items: center; min-height: 44px; }
@@ -729,7 +743,7 @@ form.course-add { margin: 0; }
 .tticks span { position: absolute; top: 8px; transform: translateX(-50%); font-size: var(--fs-1); line-height: 1.4; color: var(--sub); white-space: nowrap; }
 .tticks span.on { color: var(--navy); font-weight: 700; }
 .trange.dim { opacity: .55; }   /* 하루 요약 보기 중: 손잡이 시각이 지금 마커와 상관없다는 표시 */
-@media (max-width: 560px) { .tbar-read { line-height: 1.5; min-height: 3em; } }   /* 읽기 글이 1줄 또는 2줄로 바뀌어도 아래 지도가 흔들리지 않게 두 줄 높이로 고정 */
+@media (max-width: 560px) { .tbar-read { line-height: 1.5; } }   /* 아래 지도가 흔들리지 않게 가장 긴 읽기 글의 높이는 maps.js 가 잰다 */
 
 /* ---------- 지도 마커: 흰 이름표 + 가는 선. 실내 · 실외는 작은 점, 코스는 남색 번호 ---------- */
 .mpill { gap: 5px; padding: 1px 8px 1px 7px; border: 1px solid var(--ctl); }
@@ -819,7 +833,7 @@ form.course-add { margin: 0; }
 .best-time { display: flex; gap: var(--s3); align-items: flex-start; margin: var(--s4) 0 0; padding: var(--s3) var(--s4); border-radius: var(--r3); background: var(--card); border: 1px solid var(--line); color: var(--ink); }
 .best-time .ic { width: 22px; height: 22px; color: var(--navy); margin-top: 1px; }
 .best-time b { display: block; font-size: var(--fs-2); font-weight: 500; color: var(--sub); }
-.best-time span { font-size: var(--fs-4); font-weight: 600; line-height: 1.5; }
+.best-time span { font-size: var(--fs-4); font-weight: 600; line-height: 1.5; text-wrap: balance; }
 .overview { margin-top: var(--s3); max-width: 42em; line-height: 1.75; color: var(--ink); white-space: pre-line; }
 .d-main h2 { margin-bottom: var(--s1); }
 .intro-dl { margin-top: var(--s3); background: var(--card); border: 1px solid var(--line); border-radius: var(--r3); overflow: hidden; }
@@ -876,7 +890,7 @@ form.course-add { margin: 0; }
 .stats b { font-size: var(--fs-5); font-weight: 700; letter-spacing: -0.02em; overflow-wrap: anywhere; line-height: 1.3; }
 .stats b small { font-size: var(--fs-2); font-weight: 500; color: var(--sub); margin-left: 2px; }
 .stats span { font-size: var(--fs-1); color: var(--sub); }
-@media (max-width: 480px) { .stats b { font-size: var(--fs-4); } .stats li { padding: var(--s2) var(--s3); } }
+@media (max-width: 480px) { .stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); } .stats b { font-size: var(--fs-4); } .stats li { padding: var(--s2) var(--s3); } }
 
 .course-grid { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: var(--s5); margin-top: var(--s5); align-items: start; }
 .c-map { position: sticky; top: var(--s4); }
@@ -909,8 +923,10 @@ form.course-add { margin: 0; }
 .stop-sc > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s2); min-height: 44px; padding: var(--s1) 0; }
 .stop-sc > summary::-webkit-details-marker { display: none; }
 .stop-sc .n { font-size: var(--fs-5); line-height: 1.3; font-weight: 700; color: var(--gk-ink); }
-.stop-sc .u { font-size: var(--fs-2); color: var(--sub); margin-left: -4px; }
+.stop-sc .sc-fig { display: inline-flex; align-items: baseline; white-space: nowrap; }
+.stop-sc .u { font-size: var(--fs-2); color: var(--sub); margin-left: 2px; }
 .stop-sc .g { font-size: var(--fs-3); font-weight: 600; color: var(--gk-ink); }
+.stop-sc .sc-fig .g { margin-left: 8px; }
 .stop-sc .more { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: var(--fs-2); color: var(--sub); }
 .stop-sc .more .ic { width: 16px; height: 16px; }
 .stop-sc[open] .more .ic { transform: rotate(180deg); }
@@ -919,7 +935,7 @@ form.course-add { margin: 0; }
 .print-only { display: none; }
 @media (max-width: 640px) {
 	/* 좁은 폭: 위로 · 아래로 · 빼기는 아이콘만, 카드 맨 아래 줄 오른쪽에 둔다 */
-	.stop { grid-template-columns: 40px minmax(0, 1fr) auto; grid-template-areas: "no main main" ". sc sc" ". leg actions"; gap: 0; padding: var(--s3); }
+	.stop { grid-template-columns: 40px minmax(0, 1fr) auto; grid-template-areas: "no main main" ". sc sc" ". actions actions" ". leg leg"; gap: 0; padding: var(--s3); }
 	.stop .no { width: 28px; height: 28px; line-height: 28px; }
 	.stop-actions { margin-top: var(--s2); gap: var(--s1); justify-content: flex-end; }
 	.ibtn { padding: 0; }
@@ -944,6 +960,7 @@ form.course-add { margin: 0; }
 .share-tools { margin-top: var(--s5); padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r3); background: var(--card); }
 .share-tools h2 { font-size: var(--fs-4); font-weight: 700; margin-bottom: var(--s1); }
 .share-row { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin-top: var(--s3); }
+.share-row .btn { min-height: 48px; }
 .share-input { flex: 1 1 260px; width: auto; min-width: 0; background: var(--paper); color: var(--ink); font-size: var(--fs-3); }
 @media (max-width: 560px) { .share-row .btn, .share-actions .btn, .share-actions form { width: 100%; } .share-actions form .btn { width: 100%; } }
 

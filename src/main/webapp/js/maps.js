@@ -366,6 +366,23 @@
 				};
 			}
 
+			// 읽기 글: 시각마다 길이가 달라, 가장 긴 글의 높이만큼만 미리 잡아 두면 아래 지도가 흔들리지 않는다
+			function readText(i, summary) {
+				var label = T.steps[i];
+				var sm = summaryAt(i);
+				if (summary) return '하루 요약 — 마커에 그날의 최저~최고 기온이 보여요';
+				if (sm.sky || sm.temp) return label + ' · ' + (sm.sky ? sm.sky[0] + ' · ' : '') + (sm.temp ? '기온 ' + sm.temp : '') + (sm.pop !== null ? ' · 강수확률 최대 ' + sm.pop + '%' : '');
+				return label + ' · 이 시각 날씨 자료가 없어요';
+			}
+			function fitRead() {
+				var keep = read.textContent, max = 0, i;
+				read.style.minHeight = '';
+				for (i = 0; i < n; i++) { read.textContent = readText(i, false); max = Math.max(max, read.offsetHeight); }
+				read.textContent = readText(0, true); max = Math.max(max, read.offsetHeight);
+				read.textContent = keep;
+				if (max) read.style.minHeight = max + 'px';
+			}
+
 			function refresh() {
 				var label = T.steps[tm.idx];
 				range.value = tm.idx;
@@ -374,13 +391,7 @@
 				// 하루 요약 보기 중에는 마커가 시각이 아니라 하루 요약이라, 손잡이 값도 그렇게 읽어 준다
 				range.setAttribute('aria-valuetext', tm.summary ? '하루 요약 보기 중 · 슬라이더를 움직이면 시간별로 바뀌어요' : short);
 				range.classList.toggle('dim', !!tm.summary);
-				if (tm.summary) {
-					read.textContent = '하루 요약 — 마커에 그날의 최저~최고 기온이 보여요';
-				} else if (sm.sky || sm.temp) {
-					read.textContent = label + ' · ' + (sm.sky ? sm.sky[0] + ' · ' : '') + (sm.temp ? '기온 ' + sm.temp : '') + (sm.pop !== null ? ' · 강수확률 최대 ' + sm.pop + '%' : '');
-				} else {
-					read.textContent = label + ' · 이 시각 날씨 자료가 없어요';
-				}
+				read.textContent = readText(tm.idx, tm.summary);
 				sumBtn.setAttribute('aria-pressed', tm.summary ? 'true' : 'false');
 				sumBtn.textContent = tm.summary ? '시간별로 보기' : '하루 요약 보기';
 				layoutTicks();
@@ -427,8 +438,10 @@
 				play.addEventListener('click', function () { if (timer === null) start(); else stop(); });
 				document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
 			}
-			if (window.ResizeObserver) new ResizeObserver(layoutTicks).observe(ticks); else window.addEventListener('resize', layoutTicks);
+			var onFit = function () { layoutTicks(); fitRead(); };
+			if (window.ResizeObserver) new ResizeObserver(onFit).observe(ticks); else window.addEventListener('resize', onFit);
 			refresh();
+			fitRead();
 		}
 
 		// 같은 지역 안에서 관광지끼리 기온이 얼마나 다른지 한 줄로
@@ -450,7 +463,7 @@
 		if (sp && n >= 2 && Object.keys(kinds).length >= 2) {
 			var gap = Math.max(minHi - minLo, maxHi - maxLo);
 			sp.textContent = (gap >= 3)
-				? '같은 지역 안에서도 관광지 자리마다 날씨가 갈려요. 최저는 ' + minLo + '° ~ ' + minHi + '°, 최고는 ' + maxLo + '° ~ ' + maxHi + '°예요. 아래 날씨 지도에서 확인해 보세요.'
+				? '같은 지역 안에서도 관광지 자리마다 날씨가 갈려요. 최저는 ' + minLo + '° ~ ' + minHi + '°, 최고는 ' + maxLo + '° ~ ' + maxHi + '°⁠예요. 아래 날씨 지도에서 확인해 보세요.'
 				: '이 지역은 관광지 자리마다 날씨가 비슷해요 (최저 ' + minLo + '° ~ ' + minHi + '°).';
 			sp.hidden = false;
 		} else if (sp && n >= 2 && !sp.hasAttribute('data-mid')) { // 중기 날은 지도 아래 안내가 같은 말을 한다
