@@ -494,7 +494,8 @@ form.course-add { margin: 0; }
 .rhero-shade { position: absolute; inset: 0; z-index: -1; background: rgba(15, 26, 54, .68); }   /* 사진 위 글자가 읽히게 하는 옅은 덮개 */
 .rhero-in { padding-top: var(--s5); padding-bottom: var(--s5); min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s5); }
 .crumb { font-size: var(--fs-2); color: #dfe6f6; }
-.crumb a { display: inline-block; padding: 12px 0; margin: -12px 0; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, .45); }
+/* 누르는 자리는 위아래로 넓히되, 밑줄은 글자에 붙인다 (테두리로 그리면 넓힌 자리 끝 = 제목 바로 위에 선이 뜬다) */
+.crumb a { display: inline-block; padding: 12px 0; margin: -12px 0; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .45); text-underline-offset: 3px; }
 .rhero h1 { font-size: clamp(var(--fs-7), 5vw, var(--fs-8)); font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; margin-top: 6px; }
 .rhero-date { font-size: var(--fs-4); color: #dfe6f6; margin-top: var(--s1); }
 .rhero-wx { display: flex; flex-wrap: wrap; gap: var(--s4) var(--s7); align-items: center; }
