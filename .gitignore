@@ -1,0 +1,10 @@
+# 공공데이터포털 인증키 — 절대 올리지 않는다 (양식: src/main/webapp/WEB-INF/apikey.example.txt)
+src/main/webapp/WEB-INF/apikey.txt
+# 이클립스 빌드 결과
+build/
+bin/
+*.class
+# 운영체제 · 편집기 찌꺼기
+.DS_Store
+Thumbs.db
+*.log

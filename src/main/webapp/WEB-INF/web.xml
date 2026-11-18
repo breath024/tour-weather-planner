@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+	version="6.0">
+	<display-name>TourWeather</display-name>
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+	<!-- 세션은 쿠키로만 (주소에 ;jsessionid= 가 붙으면 링크를 공유할 때 남이 내 세션에 들어온다) -->
+	<session-config>
+		<cookie-config>
+			<http-only>true</http-only>
+		</cookie-config>
+		<tracking-mode>COOKIE</tracking-mode>
+	</session-config>
+</web-app>
