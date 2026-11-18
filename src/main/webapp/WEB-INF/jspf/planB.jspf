@@ -1,0 +1,33 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%-- 비 오면 플랜 B: 비 예보가 있는 실외 칸에만 가까운 실내 대안 한 곳을 펼쳐 둔다(JS 없이 <details> 로 동작). 쓰는 쪽에서 ${b}(PlanBlockVO) · ${nextUrl} 을 정해 둔다 --%>
+<c:if test="${b.outdoorSpot and b.rainRisk}">
+	<details class="planb risk" open>
+		<summary>비 예보 · 실내 대안</summary>
+		<c:choose>
+			<c:when test="${b.hasAlt}">
+				<c:url var="altHref" value="detail">
+					<c:param name="id" value="${b.alt.contentId}"/>
+					<c:param name="type" value="${b.alt.contentTypeId}"/>
+					<c:param name="day" value="${selDay}"/>
+					<c:param name="area" value="${selArea}"/>
+					<c:param name="sigungu" value="${selSigungu}"/>
+				</c:url>
+				<div class="planb-row">
+				<p class="planb-spot">
+					<span class="badge in"><svg class="ic" aria-hidden="true"><use href="#i-museum"/></svg>실내</span>
+					<a href="${fn:escapeXml(altHref)}"><strong><c:out value="${b.alt.title}"/></strong></a>
+					<span class="note">직선 <fmt:formatNumber value="${b.altKm}" minFractionDigits="1" maxFractionDigits="1"/>km · <c:out value="${b.alt.addr}"/></span>
+				</p>
+				<div class="planb-act"><c:set var="s" value="${b.alt}"/><%@ include file="/WEB-INF/jspf/courseAdd.jspf" %></div>
+				</div>
+			</c:when>
+			<c:when test="${b.hasInCourseAlt}">
+				<p class="note">코스 밖에는 가까운 실내 대안이 없어요. 가까운 실내 관광지 <b><c:out value="${b.inCourseAlt.title}"/></b>(직선 <fmt:formatNumber value="${b.inCourseAltKm}" minFractionDigits="1" maxFractionDigits="1"/>km)는 이미 코스 ${b.inCourseAltNo}번이에요. 비가 오면 순서를 바꿔 보세요.</p>
+			</c:when>
+			<c:otherwise><p class="note">코스에 없는 실내 관광지가 5km 안에 없어요.</p></c:otherwise>
+		</c:choose>
+	</details>
+</c:if>

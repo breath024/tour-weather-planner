@@ -1,0 +1,17 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%-- 내 코스 담기 폼. 쓰는 쪽에서 ${s}(담을 관광지) 와 ${nextUrl}(처리 뒤 돌아올 주소)을 정해 둔다 --%>
+<c:set var="inCourse" value="${courseIds.contains(s.contentId)}"/>
+<form class="course-add" method="post" action="course">
+	<input type="hidden" name="csrf" value="${csrfToken}">
+	<input type="hidden" name="action" value="add">
+	<input type="hidden" name="id" value="${s.contentId}">
+	<input type="hidden" name="next" value="${fn:escapeXml(nextUrl)}">
+	<button type="submit" class="btn-add" ${inCourse ? 'disabled' : ''}>
+		<c:choose>
+			<c:when test="${inCourse}"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>담김</c:when>
+			<c:otherwise><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>내 코스에 담기</c:otherwise>
+		</c:choose>
+	</button>
+</form>

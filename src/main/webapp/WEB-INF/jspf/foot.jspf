@@ -1,0 +1,11 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<footer class="foot">
+	<div class="wrap">
+		<p>자료: 한국관광공사 · 기상청 · 에어코리아 · 천문연구원 — 공공데이터포털<c:if test="${needMap}"> · 지도 © OpenStreetMap contributors</c:if></p>
+		<p class="foot-sub">관광지 위치에 맞춰 그 자리의 날씨를 알려 주는 학교 과제 서비스예요.</p>
+	</div>
+</footer>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>

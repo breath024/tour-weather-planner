@@ -1,0 +1,48 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%-- 여행 지수 카드: 점수 숫자 + 등급 글자(예: 82 좋음) + 가는 눈금(50 · 70 · 85가 비추 · 보통 · 좋음 · 최고의 경계) + 근거 줄 5개.
+     쓰는 쪽에서 ${sc}(ScoreVO) · ${scTitle}(제목 글자)를 정해 둔다.
+     눈금 위치는 CSS 변수 --p(점수)로만 정하므로 자바스크립트 없이도 보인다.
+     자료가 없는 근거는 회색 점선 칸 + 이유(「자료 없음」)로 보이고 점수에서는 빠진다. --%>
+<c:if test="${not empty sc}">
+	<div class="score gk-${fn:escapeXml(sc.gradeKey)}" <c:if test="${sc.available}">style="--p:${sc.score}"</c:if>>
+		<p class="score-title"><c:out value="${scTitle}"/></p>
+		<div class="score-main">
+			<div class="score-read">
+				<c:choose>
+					<c:when test="${sc.available}">
+						<p class="score-fig"><span class="sr-only">여행 지수 </span><b class="score-num">${sc.score}</b><span class="score-unit">점</span></p>
+						<p class="score-stamp"><span>${fn:escapeXml(sc.grade)}</span></p>
+						<c:if test="${sc.uncertain}"><p class="score-unc"><span class="ds-unc">불확실</span> 신뢰도 ${fn:escapeXml(sc.confidence)}</p></c:if>
+					</c:when>
+					<c:otherwise>
+						<p class="score-fig"><b class="score-num none">–</b></p>
+						<p class="score-stamp"><span>자료 없음</span></p>
+					</c:otherwise>
+				</c:choose>
+			</div>
+			<c:if test="${sc.available}">
+				<div class="scale" role="img" aria-label="${sc.score}점, ${fn:escapeXml(sc.grade)}. 50점 미만 비추, 50~69 보통, 70~84 좋음, 85 이상 최고">
+					<div class="scale-bar" aria-hidden="true">
+						<i class="b-bad"></i><i class="b-ok"></i><i class="b-good"></i><i class="b-best"></i>
+						<span class="scale-pin"></span>
+					</div>
+					<div class="scale-ticks" aria-hidden="true"><span style="left:50%">50</span><span style="left:70%">70</span><span style="left:85%">85</span></div>
+				</div>
+			</c:if>
+		</div>
+		<ul class="schips">
+			<c:forEach items="${sc.chips}" var="ch">
+				<li class="chip chip-${fn:escapeXml(ch.level)}" title="${fn:escapeXml(ch.hint)}">
+					<svg class="ic chip-ic" aria-hidden="true"><use href="${ch.level == 'good' ? '#i-check' : (ch.level == 'bad' ? '#i-warn' : (ch.level == 'ok' ? '#i-info' : '#i-x'))}"/></svg>
+					<span class="chip-k">${fn:escapeXml(ch.label)}</span>
+					<span class="chip-v">${fn:escapeXml(ch.text)}<c:if test="${ch.delta < 0}"> <i class="chip-d"><span class="sr-only">감점 </span>−${-ch.delta}점</i></c:if></span>
+					<c:if test="${ch.level == 'none' and not empty ch.hint}"><small class="chip-why"><c:out value="${ch.hint}"/></small></c:if>
+				</li>
+			</c:forEach>
+		</ul>
+		<c:if test="${sc.available and sc.uncertain}"><p class="score-note unc-note"><b>불확실한 점수예요.</b> <c:out value="${sc.uncertainNote}"/>. 다른 날에는 있는 근거가 이날은 없어서 점수는 90점까지만 매겨요.</p></c:if>
+		<c:if test="${not empty sc.note}"><p class="score-note"><c:out value="${sc.note}"/></p></c:if>
+	</div>
+</c:if>

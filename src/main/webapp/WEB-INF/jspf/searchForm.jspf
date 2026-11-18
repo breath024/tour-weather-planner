@@ -1,0 +1,44 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%-- 지역 · 키워드 · 날짜 검색 폼. JS 가 없어도 「조회」 버튼으로 동작한다 --%>
+<form class="sform" action="plan" method="get">
+	<div class="f">
+		<label for="fArea">지역</label>
+		<select id="fArea" name="area" data-autosubmit data-reset="sigungu">
+			<option value="">시·도 선택</option>
+			<c:forEach items="${areas}" var="a">
+				<option value="${fn:escapeXml(a.key)}" ${a.key == selArea ? 'selected' : ''}>${fn:escapeXml(a.value)}</option>
+			</c:forEach>
+		</select>
+	</div>
+	<div class="f">
+		<label for="fSigungu">시·군·구</label>
+		<select id="fSigungu" name="sigungu" data-autosubmit ${empty sigunguList ? 'disabled' : ''}>
+			<option value="">전체</option>
+			<c:forEach items="${sigunguList}" var="g">
+				<option value="${fn:escapeXml(g[0])}" ${g[0] == selSigungu ? 'selected' : ''}><c:out value="${g[1]}"/></option>
+			</c:forEach>
+		</select>
+	</div>
+	<div class="f f-kw">
+		<label for="fKw">검색어 <span class="opt">없어도 돼요</span></label>
+		<input id="fKw" type="search" name="keyword" value="${fn:escapeXml(keyword)}" maxlength="30" placeholder="예: 불국사" autocomplete="off">
+	</div>
+	<div class="f f-day">
+		<label for="fDay">날짜 <span class="opt">오늘~10일 뒤</span></label>
+		<select id="fDay" name="day" data-autosubmit-if="area">
+			<optgroup label="단기예보 · 시간별">
+				<c:forEach items="${days}" var="d" begin="0" end="3">
+					<option value="${fn:escapeXml(d[0])}" ${d[0] == selDay ? 'selected' : ''}>${fn:escapeXml(d[1])}</option>
+				</c:forEach>
+			</optgroup>
+			<optgroup label="중기예보 · 오전 · 오후만">
+				<c:forEach items="${days}" var="d" begin="4">
+					<option value="${fn:escapeXml(d[0])}" ${d[0] == selDay ? 'selected' : ''}>${fn:escapeXml(d[1])}</option>
+				</c:forEach>
+			</optgroup>
+		</select>
+	</div>
+	<button type="submit" class="btn btn-coral">조회</button>
+</form>
