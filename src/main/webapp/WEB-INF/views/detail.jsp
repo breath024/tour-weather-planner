@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="tw" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%-- 관광지 상세: 사진 hero · 이용 안내 · 사진 갤러리 · 가기 좋은 시간 · 주변 · 지도 --%>
 <c:set var="pageTitle" value="${empty spot ? '관광지 상세' : spot.title}"/>
@@ -161,7 +162,7 @@
 						<div class="wx-big">
 							<span class="wx-icon" aria-hidden="true"><svg class="ic"><use href="#w-${fn:escapeXml(weather.icon)}"/></svg></span>
 							<div>
-								<div class="wx-temp">${fn:escapeXml(weather.tempRange)}</div>
+								<div class="wx-temp"><tw:trange lo="${weather.minTemp}" hi="${weather.maxTemp}"/></div>
 								<div class="wx-sky">${fn:escapeXml(weather.sky)} · 강수확률 최대 ${weather.maxPop}%</div>
 							</div>
 						</div>

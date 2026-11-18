@@ -210,4 +210,28 @@
 		b.hidden = false;
 		b.addEventListener('click', function () { window.print(); });
 	});
+
+	// ---------- 블랙 모드 단추 (머리 오른쪽). 고른 값은 localStorage 'tw-theme', 안 골랐으면 기기 설정을 따른다 ----------
+	(function () {
+		var root = document.documentElement;
+		var btn = document.querySelector('[data-theme-toggle]');
+		var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+		function isDark() {
+			var t = root.getAttribute('data-theme');
+			return t ? t === 'dark' : !!(mq && mq.matches);
+		}
+		function sync() {
+			var dark = isDark();
+			if (btn) btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+			document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', dark ? '#0e1014' : '#ffffff'); });
+		}
+		if (btn) btn.addEventListener('click', function () {
+			var next = isDark() ? 'light' : 'dark';
+			root.setAttribute('data-theme', next);
+			try { localStorage.setItem('tw-theme', next); } catch (e) { /* 저장 못 해도 이 쪽에서는 바뀐다 */ }
+			sync();
+		});
+		if (mq) { if (mq.addEventListener) mq.addEventListener('change', sync); else if (mq.addListener) mq.addListener(sync); }
+		sync();
+	})();
 })();

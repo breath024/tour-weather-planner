@@ -21,6 +21,16 @@
 	function icon(name) { return window.TW.icon(name); }
 	function wx(key) { return /^[a-z-]+$/.test(key || '') ? window.TW.icon('w-' + key) : document.createTextNode(''); }
 
+	// 최저 ~ 최고 기온: 최저 파랑 · 최고 빨강 글자 (서버 trange.tag 와 같은 모양). 숫자가 없으면 글자 그대로
+	function trange(w) {
+		if (typeof w.minTemp !== 'number' || typeof w.maxTemp !== 'number') return document.createTextNode(w.tempRange || '-');
+		var s = el('span', 'tr');
+		s.appendChild(el('span', 't-lo', w.minTemp + '°'));
+		s.appendChild(document.createTextNode(' ~ '));
+		s.appendChild(el('span', 't-hi', w.maxTemp + '°'));
+		return s;
+	}
+
 	function message(text, bad) {
 		panel.textContent = '';
 		var box = el('div', 'state ' + (bad ? '' : 'soft'));
@@ -205,7 +215,9 @@
 		wic.appendChild(wx(w.icon));
 		big.appendChild(wic);
 		var t = el('div');
-		t.appendChild(el('div', 'wx-temp', w.tempRange));
+		var wt = el('div', 'wx-temp');
+		wt.appendChild(trange(w));
+		t.appendChild(wt);
 		t.appendChild(el('div', 'wx-sky', w.sky + ' · 강수확률 최대 ' + w.maxPop + '%'));
 		big.appendChild(t);
 		card.appendChild(big);
@@ -335,7 +347,7 @@
 		var mine = ++seq; // 늦게 온 옛 응답이 새 결과를 덮지 않게
 		if (hasMap) {
 			if (pin) pin.setLatLng([lat, lon]); else pin = L.marker([lat, lon], { icon: T.dot({}, true), keyboard: false }).addTo(map);
-			if (ring) ring.setLatLng([lat, lon]); else ring = L.circle([lat, lon], { radius: 5000, color: '#c9402b', weight: 1.5, fillOpacity: 0.05, dashArray: '4 6', interactive: false }).addTo(map);
+			if (ring) ring.setLatLng([lat, lon]); else ring = L.circle([lat, lon], { radius: 5000, color: '#c9402b', className: 'ring-line', weight: 1.5, fillOpacity: 0.05, dashArray: '4 6', interactive: false }).addTo(map);
 		}
 		loading();
 		var day = document.getElementById('exploreDay').value;

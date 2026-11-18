@@ -8,13 +8,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1014" media="(prefers-color-scheme: dark)">
 <title>${fn:escapeXml(pageTitle)} · 여행 날씨</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <c:if test="${needMap}"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></c:if>
 <link rel="stylesheet" href="css/style.css?v=${applicationScope.assetV}">
-<script>document.documentElement.className += ' js';</script>
+<%-- 블랙 모드: 고른 적이 있으면 그 값(localStorage), 없으면 기기 설정을 따른다. 화면을 그리기 전에 붙여야 번쩍임이 없다 --%>
+<script>(function (d) { d.className += ' js'; try { var t = localStorage.getItem('tw-theme'); if (t === 'dark' || t === 'light') d.setAttribute('data-theme', t); } catch (e) {} })(document.documentElement);</script>
 <c:if test="${needMap}"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script></c:if>
 <script src="js/app.js?v=${applicationScope.assetV}" defer></script>
 <script src="js/course.js?v=${applicationScope.assetV}" defer></script>
@@ -26,14 +28,14 @@
 <%-- 아이콘 한 벌: 24 격자 · 선 1.5 · 둥근 끝 · currentColor. <svg class="ic"><use href="#i-이름"/></svg> 로 쓴다.
      날씨는 #w-이름 (sun · cloud-sun · cloud · overcast · rain · sleet · snow · shower) — 서버 · 지도 JSON 의 icon 값이 이 이름이다 --%>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-	<symbol id="w-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></symbol>
-	<symbol id="w-cloud-sun" viewBox="0 0 24 24"><path d="M7.5 2.5v1.3M2.5 7.5h1.3M4 4l.9.9M11 4l-.9.9"/><path d="M7.4 11.2A3.4 3.4 0 117.5 4.3"/><path d="M9.5 20a3.5 3.5 0 01-.3-6.98 5 5 0 019.5 1.3A3 3 0 0118 20z"/></symbol>
-	<symbol id="w-cloud" viewBox="0 0 24 24"><path d="M7 19a4 4 0 01-.6-7.95A6 6 0 0118 12a3.5 3.5 0 01-.5 7z"/></symbol>
-	<symbol id="w-overcast" viewBox="0 0 24 24"><path d="M7.5 11.5A4.2 4.2 0 0115.7 9.6 3.4 3.4 0 0121 12.8"/><path d="M6.5 20a3.4 3.4 0 01-.3-6.8 5 5 0 019.5 1.2 2.8 2.8 0 01-.2 5.6z"/></symbol>
-	<symbol id="w-rain" viewBox="0 0 24 24"><path d="M7 14a4 4 0 01-.6-7.95A6 6 0 0118 7a3.5 3.5 0 01-.5 7z"/><path d="M8 17.5l-1 3M12 17.5l-1 3M16 17.5l-1 3"/></symbol>
-	<symbol id="w-sleet" viewBox="0 0 24 24"><path d="M7 14a4 4 0 01-.6-7.95A6 6 0 0118 7a3.5 3.5 0 01-.5 7z"/><path d="M8.5 17.5l-1 3M16 17.5v3.6M14.2 18.6l3.6 1.8M17.8 18.6l-3.6 1.8"/></symbol>
-	<symbol id="w-snow" viewBox="0 0 24 24"><path d="M7 14a4 4 0 01-.6-7.95A6 6 0 0118 7a3.5 3.5 0 01-.5 7z"/><path d="M8 16.8v3.6M6.2 17.9l3.6 1.8M9.8 17.9l-3.6 1.8M16 16.8v3.6M14.2 17.9l3.6 1.8M17.8 17.9l-3.6 1.8"/></symbol>
-	<symbol id="w-shower" viewBox="0 0 24 24"><path d="M7.5 1.8v1.2M2 7.5h1.2M3.6 3.6l.8.8M11.4 3.6l-.8.8"/><path d="M7.2 10.6A3.2 3.2 0 117.4 4.4"/><path d="M9.5 15.5a3.5 3.5 0 01-.3-6.98 5 5 0 019.5 1.3A3 3 0 0118 15.5z"/><path d="M11 18l-.8 2.6M15 18l-.8 2.6M19 18l-.8 2.6"/></symbol>
+	<symbol id="w-sun" viewBox="0 0 24 24"><g style="stroke: var(--wi-sun, currentColor)"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></g></symbol>
+	<symbol id="w-cloud-sun" viewBox="0 0 24 24"><g style="stroke: var(--wi-sun, currentColor)"><path d="M7.5 2.5v1.3M2.5 7.5h1.3M4 4l.9.9M11 4l-.9.9"/><path d="M7.4 11.2A3.4 3.4 0 117.5 4.3"/></g><g style="stroke: var(--wi-cloud, currentColor)"><path d="M9.5 20a3.5 3.5 0 01-.3-6.98 5 5 0 019.5 1.3A3 3 0 0118 20z"/></g></symbol>
+	<symbol id="w-cloud" viewBox="0 0 24 24"><g style="stroke: var(--wi-cloud, currentColor)"><path d="M7 19a4 4 0 01-.6-7.95A6 6 0 0118 12a3.5 3.5 0 01-.5 7z"/></g></symbol>
+	<symbol id="w-overcast" viewBox="0 0 24 24"><g style="stroke: var(--wi-cloud, currentColor)"><path d="M7.5 11.5A4.2 4.2 0 0115.7 9.6 3.4 3.4 0 0121 12.8"/><path d="M6.5 20a3.4 3.4 0 01-.3-6.8 5 5 0 019.5 1.2 2.8 2.8 0 01-.2 5.6z"/></g></symbol>
+	<symbol id="w-rain" viewBox="0 0 24 24"><g style="stroke: var(--wi-cloud, currentColor)"><path d="M7 14a4 4 0 01-.6-7.95A6 6 0 0118 7a3.5 3.5 0 01-.5 7z"/></g><g style="stroke: var(--wi-rain, currentColor)"><path d="M8 17.5l-1 3M12 17.5l-1 3M16 17.5l-1 3"/></g></symbol>
+	<symbol id="w-sleet" viewBox="0 0 24 24"><g style="stroke: var(--wi-cloud, currentColor)"><path d="M7 14a4 4 0 01-.6-7.95A6 6 0 0118 7a3.5 3.5 0 01-.5 7z"/></g><g style="stroke: var(--wi-rain, currentColor)"><path d="M8.5 17.5l-1 3"/></g><g style="stroke: var(--wi-snow, currentColor)"><path d="M16 17.5v3.6M14.2 18.6l3.6 1.8M17.8 18.6l-3.6 1.8"/></g></symbol>
+	<symbol id="w-snow" viewBox="0 0 24 24"><g style="stroke: var(--wi-cloud, currentColor)"><path d="M7 14a4 4 0 01-.6-7.95A6 6 0 0118 7a3.5 3.5 0 01-.5 7z"/></g><g style="stroke: var(--wi-snow, currentColor)"><path d="M8 16.8v3.6M6.2 17.9l3.6 1.8M9.8 17.9l-3.6 1.8M16 16.8v3.6M14.2 17.9l3.6 1.8M17.8 17.9l-3.6 1.8"/></g></symbol>
+	<symbol id="w-shower" viewBox="0 0 24 24"><g style="stroke: var(--wi-sun, currentColor)"><path d="M7.5 1.8v1.2M2 7.5h1.2M3.6 3.6l.8.8M11.4 3.6l-.8.8"/><path d="M7.2 10.6A3.2 3.2 0 117.4 4.4"/></g><g style="stroke: var(--wi-cloud, currentColor)"><path d="M9.5 15.5a3.5 3.5 0 01-.3-6.98 5 5 0 019.5 1.3A3 3 0 0118 15.5z"/></g><g style="stroke: var(--wi-rain, currentColor)"><path d="M11 18l-.8 2.6M15 18l-.8 2.6M19 18l-.8 2.6"/></g></symbol>
 
 	<symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 21v-6M12 15c-4 0-6.5-2.5-6.5-5.5C5.5 6 8.5 3 12 3s6.5 3 6.5 6.5C18.5 12.5 16 15 12 15z"/></symbol>
 	<symbol id="i-museum" viewBox="0 0 24 24"><path d="M3 9l9-5 9 5M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9M3 21h18M3 18h18"/></symbol>
@@ -64,6 +66,7 @@
 	<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></symbol>
 	<symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></symbol>
 	<symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="17.5" cy="6" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/><path d="M8.2 10.8l7.1-3.6M8.2 13.2l7.1 3.6"/></symbol>
+	<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></symbol>
 	<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></symbol>
 	<symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M3 18h18M7 18a5 5 0 0110 0M12 6v3M5 10l1.5 1.5M19 10l-1.5 1.5M9 7l3-3 3 3"/></symbol>
 	<symbol id="i-sunset" viewBox="0 0 24 24"><path d="M3 18h18M7 18a5 5 0 0110 0M12 6v3M5 10l1.5 1.5M19 10l-1.5 1.5M9 4l3 3 3-3"/></symbol>
@@ -90,5 +93,6 @@
 			<a href="explore" class="${navActive == 'explore' ? 'on' : ''}" ${navActive == 'explore' ? 'aria-current="page"' : ''}>지도</a>
 			<a href="course" class="course-link ${navActive == 'course' ? 'on' : ''}" ${navActive == 'course' ? 'aria-current="page"' : ''}>내 코스 <span class="course-badge" data-course-count ${empty courseCount or courseCount == 0 ? 'data-zero' : ''}>${empty courseCount ? 0 : courseCount}</span></a>
 		</nav>
+		<button type="button" class="theme-btn js-only" data-theme-toggle aria-pressed="false" title="블랙 모드 켜기 · 끄기"><svg class="ic ic-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="ic ic-sun" aria-hidden="true"><use href="#i-sun"/></svg><span class="sr-only">블랙 모드</span></button>
 	</div>
 </header>

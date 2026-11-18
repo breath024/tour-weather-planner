@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="tw" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%-- 지역 플래너: 처음 화면(지역 타일) → 결과(hero · 하루 코스 · 날씨 지도 · 관광지 카드) --%>
 <c:set var="pageTitle" value="${empty regionName ? '지역 플래너' : regionName}"/>
@@ -129,7 +130,7 @@
 						<div class="wx-big">
 							<span class="wx-icon" aria-hidden="true"><svg class="ic"><use href="#w-${fn:escapeXml(weather.icon)}"/></svg></span>
 							<div>
-								<div class="wx-temp">${fn:escapeXml(weather.tempRange)}</div>
+								<div class="wx-temp"><tw:trange lo="${weather.minTemp}" hi="${weather.maxTemp}"/></div>
 								<div class="wx-sky">${fn:escapeXml(weather.sky)} · 강수확률 최대 ${weather.maxPop}%</div>
 							</div>
 						</div>
@@ -271,7 +272,7 @@
 								<c:choose>
 									<c:when test="${d.source != 'NONE'}">
 										<span class="ds-wx"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(d.icon)}"/></svg><span class="sr-only">${fn:escapeXml(d.sky)}</span></span>
-										<span class="ds-temp">${fn:escapeXml(d.tempRange)}</span>
+										<span class="ds-temp"><tw:trange range="${d.tempRange}"/></span>
 									</c:when>
 									<c:otherwise><span class="ds-wx muted" aria-hidden="true">–</span><span class="ds-temp muted">예보 없음</span></c:otherwise>
 								</c:choose>
@@ -335,7 +336,7 @@
 									</div>
 									<div class="tl-card">
 										<p class="tl-wx">
-											<span class="tl-wx-txt"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(b.icon)}"/></svg>${fn:escapeXml(b.sky)} · ${fn:escapeXml(b.temp)} · 강수 ${b.pop}%<c:if test="${b.approx}"> <em class="approx">대략</em></c:if></span>
+											<span class="tl-wx-txt"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(b.icon)}"/></svg><span>${fn:escapeXml(b.sky)} · <b class="t-one">${fn:escapeXml(b.temp)}</b> · 강수 ${b.pop}%<c:if test="${b.approx}"> <em class="approx">대략</em></c:if></span></span>
 											<span class="pill ${b.good ? 'ok' : 'rain'}">${fn:escapeXml(b.kind)}<c:if test="${not empty b.reason}"> · <c:out value="${b.reason}"/></c:if></span>
 										</p>
 										<a class="tl-spot" href="${fn:escapeXml(blockHref)}">
@@ -413,7 +414,7 @@
 									<strong><c:out value="${e.title}"/></strong>
 									<span class="fest-period">${fn:escapeXml(e.eventPeriod)}</span>
 									<span class="addr"><c:out value="${e.addr}"/></span>
-									<c:if test="${not empty e.weather}"><span class="fest-wx"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(e.weather.icon)}"/></svg><span class="sr-only">${fn:escapeXml(e.weather.sky)} </span>${fn:escapeXml(e.weather.tempRange)} · 강수확률 ${e.weather.maxPop}%<c:if test="${e.weatherApprox}"> <em class="approx">대략</em></c:if></span></c:if>
+									<c:if test="${not empty e.weather}"><span class="fest-wx"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(e.weather.icon)}"/></svg><span class="sr-only">${fn:escapeXml(e.weather.sky)} </span><span><tw:trange lo="${e.weather.minTemp}" hi="${e.weather.maxTemp}"/> · 강수확률 ${e.weather.maxPop}%<c:if test="${e.weatherApprox}"> <em class="approx">대략</em></c:if></span></span></c:if>
 								</a>
 								<c:if test="${not empty e.eventWarn}"><p class="warn-line"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><c:out value="${e.eventWarn}"/></p></c:if>
 								<div class="fest-act"><c:set var="s" value="${e}"/><%@ include file="/WEB-INF/jspf/courseAdd.jspf" %></div>

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="tw" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%-- 내 코스: 담은 순서 · 곳마다 그날 날씨 · 순서 바꾸기 · 경로 지도 / 공유 링크(?share=…)로 열면 같은 화면을 읽기 전용으로 --%>
 <c:set var="pageTitle" value="${shareMode ? '공유받은 코스' : '내 코스'}"/>
@@ -164,7 +165,7 @@
 								<p class="addr">${fn:escapeXml(st.item.typeName)} · <c:out value="${st.item.addr}"/></p>
 							<c:choose>
 								<c:when test="${not empty st.weather}">
-									<p class="stop-wx"><span aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(st.weather.icon)}"/></svg></span> ${fn:escapeXml(st.weather.sky)} · ${fn:escapeXml(st.weather.tempRange)} · 강수확률 ${st.weather.maxPop}%</p>
+									<p class="stop-wx"><span aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(st.weather.icon)}"/></svg></span> <span>${fn:escapeXml(st.weather.sky)} · <tw:trange lo="${st.weather.minTemp}" hi="${st.weather.maxTemp}"/> · 강수확률 ${st.weather.maxPop}%</span></p>
 								</c:when>
 								<c:when test="${not empty st.weatherError}">
 									<p class="stop-wx muted"><c:out value="${st.weatherError}"/></p>

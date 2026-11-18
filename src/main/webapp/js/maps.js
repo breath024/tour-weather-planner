@@ -185,7 +185,7 @@
 		var route = null;
 		if (course.length > 1) {
 			route = L.polyline(course.map(function (c) { return [c.lat, c.lon]; }), {
-				color: '#17264a', weight: 3, opacity: 0.8, dashArray: '2 8', lineCap: 'round'
+				color: '#17264a', className: 'route-line', weight: 3, opacity: 0.8, dashArray: '2 8', lineCap: 'round'
 			}).addTo(map);
 		}
 
@@ -507,7 +507,7 @@
 			pts.push([p.lat, p.lon]);
 		});
 		if (pts.length > 1) {
-			L.polyline(pts, { color: '#17264a', weight: 3, opacity: 0.8, dashArray: '2 8', lineCap: 'round' }).addTo(map);
+			L.polyline(pts, { color: '#17264a', className: 'route-line', weight: 3, opacity: 0.8, dashArray: '2 8', lineCap: 'round' }).addTo(map);
 		}
 		fit(map, pts);
 	}
