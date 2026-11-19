@@ -6,6 +6,31 @@
 - JSP + Servlet (Model 2) · `java.net.http.HttpClient` · Gson
 - Java 17 · Tomcat 11 (jakarta.*) · 프레임워크 없음
 
+## 화면
+
+![지역 플래너 — 경북 경주시. 그날 날씨 · 여행 지수 · 시간별 예보](docs/screenshots/plan.jpg)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/daystrip.png" alt="날씨 달력"><br><b>날씨 달력</b> — 오늘부터 10일 뒤까지 여행 지수를 비교하고 가장 좋은 날을 고릅니다.</td>
+    <td width="50%"><img src="docs/screenshots/dayplan.png" alt="날씨 맞춤 하루 코스"><br><b>하루 코스</b> — 2시간 칸마다 그 자리 날씨에 맞는 곳을 가까운 순서로 잇습니다.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/map.jpg" alt="날씨 지도"><br><b>날씨 지도</b> — 관광지마다 날씨 마커. 시간 슬라이더로 시각을 바꿉니다.</td>
+    <td><img src="docs/screenshots/detail.jpg" alt="관광지 상세"><br><b>관광지 상세</b> — 사진 · 이용 안내 · 그날 날씨와 여행 지수.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/explore.jpg" alt="지도 탐색"><br><b>지도 탐색</b> — 지도를 누르거나 내 위치로 근처 관광지와 날씨를 봅니다.</td>
+    <td><img src="docs/screenshots/dark.jpg" alt="블랙 모드"><br><b>블랙 모드</b> — 머리 오른쪽 단추로 켜고 끕니다.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/home.png" alt="첫 화면"><br><b>첫 화면</b> — 지역 · 날짜 고르기와 지역 바로 가기.</td>
+    <td align="center"><img src="docs/screenshots/phone.jpg" alt="휴대폰 화면 (밝은 · 블랙)" width="70%"><br><b>휴대폰</b> — 좁은 화면에서도 정보가 잘리지 않게 맞춥니다.</td>
+  </tr>
+</table>
+
+화면은 2026-11-20 실제 API 응답으로 찍었습니다(날짜 · 날씨 · 점수는 그날 기준).
+
 ## 기능
 
 | 화면 | 하는 일 |
