@@ -1,6 +1,10 @@
 # HANDOFF — 여행 날씨 (TourWeather)
 
 ## 다음에 해야 할 것
+- **실행 묶음 zip 드라이브 공유 (결정 대기)**
+  - `build/bundle/` 에 zip 두 개가 있다: 키 없는 `TourWeather-windows.zip`, 키 든 `TourWeather-windows-key.zip`. `build/` 는 저장소에 안 올라간다.
+  - 정할 것: 키 든 zip 을 올릴지, 그리고 공유 범위(링크 아는 사람 / 지정한 사람).
+  - 키 든 zip 링크는 README 같은 공개된 곳에 쓰지 않는다.
 - **(선택) 날씨 지도 첫 화면 개선**
   - 관광지가 해안에 몰린 지역(예: 포항 북구 `plan?area=47&sigungu=113`)에서는 처음 화면에서 이름표 대부분이 점으로 접혀 날씨가 안 보인다. 확대하면 보인다.
   - 고칠 자리: `js/maps.js` 의 `fit()`(maxZoom · padding)과 `.map` 높이.
@@ -24,6 +28,11 @@
   - 고른 적이 없으면 기기 설정(`prefers-color-scheme`)을 따른다.
   - JS 가 없어도 CSS 미디어 쿼리로 기기 설정을 따른다.
 - 기온 출력: `WEB-INF/tags/trange.tag` 가 맡는다(최저 파랑 · 최고 빨강).
+- 화면 캡처: README 의 `docs/screenshots/`. 다시 찍을 때는 같은 이름으로 덮어쓴다.
+- 윈도우 실행 묶음: `sh tools/bundle/build_bundle.sh [--with-key]` → `build/bundle/*.zip`.
+  - 받은 사람은 압축을 풀고 `START.bat` 만 누른다. 작은 자바와 톰캣이 들어 있어 설치가 필요 없다.
+  - 이 PC 안(127.0.0.1:8095)에서만 열리고, 창을 닫으면 꺼진다.
+  - `START.bat` 은 일부러 영어(ASCII)만 쓴다. 한글 안내는 `tomcat/msg/*.txt` 를 띄운다.
 - 날씨 아이콘 색: `head.jspf` 의 `#w-…` 그림이 `--wi-sun` · `--wi-cloud` · `--wi-rain` · `--wi-snow` 토큰을 쓴다.
 
 ## 돌리는 법 · 함정
@@ -41,5 +50,6 @@
   - flex 줄 안의 span 간격.
 
 ## 기록
+- `logs/2026-11-20-log.md` — README 화면 캡처, 윈도우 실행 묶음(zip)
 - `logs/2026-11-19-log.md` — 잘 보이게(아이콘 색 · 기온 · 등급 색) + 블랙 모드, 메모리 누수 점검
 - 그 전(1~4판 · 화면 QA)은 `git log` 에 있다.
