@@ -13,7 +13,7 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/dayplan.jpg" alt="추천 동선(하루 코스)"><br><b>추천 동선</b> — 2시간 칸마다 그 자리 날씨에 맞는 곳을 가까운 순서로 잇고, 옆 지도에 번호와 선으로 그립니다. 구간마다 걸어서 · 차로 어림 시간을 붙입니다.</td>
+    <td width="50%"><img src="docs/screenshots/dayplan.jpg" alt="추천 동선(하루 코스)"><br><b>추천 동선</b> — 2시간 칸마다 그 자리 날씨에 맞는 곳을 가까운 순서로 잇고, 옆 지도에 실제 길을 따라 그리고(실선 걸어서 · 끊긴 선 차로), 구간마다 걸리는 시간을 붙입니다.</td>
     <td width="50%"><img src="docs/screenshots/plan.jpg" alt="지역 플래너 — 인천 제물포구"><br><b>지역 플래너</b> — 그날 날씨 · 여행 지수 · 시간별 예보를 맨 위에 모읍니다.</td>
   </tr>
   <tr>
@@ -40,7 +40,7 @@
 | 지역 플래너 `/plan` | 시 · 도 / 시 · 군 · 구 / 날짜(오늘~10일 뒤)로 관광지를 불러와 관광지 격자마다 기상청 예보를 붙입니다. 실내 · 실외를 날씨에 맞춰 추천합니다. |
 | 여행 지수 | 날씨 · 미세먼지 · 자외선 · 붐빔 · 기상특보를 100점으로 묶고, 근거를 줄 단위로 보여 줍니다. 자료가 빠진 날은 「불확실」로 표시하고 90점까지만 매깁니다. |
 | 날씨 달력 | 0~3일은 단기예보, 4~10일은 중기예보를 이어 붙여 11일을 비교합니다. 「가장 좋은 날」은 모든 날에 공통으로 있는 근거만으로 고릅니다. |
-| 추천 동선(하루 코스) | 2시간 칸마다 날씨에 맞는 곳을 가까운 순서로 잇고, 해가 지기 전에 실외 일정을 끝냅니다. 옆 지도에 번호와 선으로 그리고, 구간마다 걸어서 · 차로 어림 시간을 붙입니다(길 찾기 API 없이 직선거리로 어림). 비 위험이 있는 실외 칸에는 5km 안의 실내 대안(플랜 B)을 붙입니다. |
+| 추천 동선(하루 코스) | 2시간 칸마다 날씨에 맞는 곳을 가까운 순서로 잇고, 해가 지기 전에 실외 일정을 끝냅니다. 옆 지도에 실제 길을 따라 그리고, 구간마다 걸어서 · 차로 시간과 길 거리를 붙입니다(오픈스트리트맵 길 찾기. 못 받으면 직선거리로 어림). 비 위험이 있는 실외 칸에는 5km 안의 실내 대안(플랜 B)을 붙입니다. |
 | 날씨 지도 | Leaflet 지도 위에 관광지별 날씨 마커를 그립니다. 시간 슬라이더를 옮기면 그 시각의 날씨로 바뀝니다. 분류 칩(자연 · 역사 · 체험 …)으로 거를 수 있습니다. 고른 지역으로 확대하고, 좌표가 멀리 튄 곳은 처음 화면에서 빼고 알려 줍니다. |
 | 축제 · 행사 | 고른 날 열리고 있는 행사와 그 자리 날씨를 보여 주고, 야외 행사에 비 예보가 있으면 알립니다. |
 | 상세 `/detail` | 사진 · 이용 안내 · 그날 날씨와 여행 지수 · 주변 관광지를 보여 줍니다. |
@@ -63,13 +63,15 @@ JS가 꺼져 있어도 링크와 폼만으로 동작합니다. 좁은 화면에�
 | 한국환경공단 에어코리아 대기오염정보 | 미세먼지 · 초미세먼지 |
 | 한국천문연구원 출몰시각 정보 | 해 뜨는 · 지는 시각 |
 
+길 찾기는 공공데이터포털이 아니라 오픈스트리트맵 길 찾기(OSRM, [FOSSGIS 운영](https://routing.openstreetmap.de/about.html), 키 없음)를 씁니다. 이용 조건에 맞춰 초당 1번 넘게 부르지 않고, 받은 길은 24시간 기억합니다. 관광지 좌표만 보내고 내 위치는 보내지 않습니다(출발점에서 첫 곳까지는 직선거리 어림).
+
 호출을 아끼려고 응답을 메모리에 잠깐 캐시하고(목록 30분 · 상세 6시간 등), 서로 상관없는 호출은 동시에 보냅니다. 오류 응답은 캐시하지 않습니다.
 
 ## 구조 (Model 2)
 
 ```
 src/main/java/com/inha/controller   서블릿 (PlanController · DetailController · CourseController · ExploreController · AroundController …)
-src/main/java/com/inha/model        DAO · VO · 점수(TravelScore) · 코스 짜기(CoursePlanner) · 내 주변 동선(NearbyRoute) · 예보 잇기(ForecastStitcher) · 캘린더(IcsBuilder)
+src/main/java/com/inha/model        DAO · VO · 점수(TravelScore) · 코스 짜기(CoursePlanner) · 내 주변 동선(NearbyRoute) · 실제 길(RoadRoute) · 예보 잇기(ForecastStitcher) · 캘린더(IcsBuilder)
 src/main/webapp/WEB-INF/views       JSP 화면
 src/main/webapp/WEB-INF/jspf        공통 조각 (머리 · 카드 · 점수 · 플랜 B …)
 src/main/webapp/css · js            스타일 · 보조 스크립트 (없어도 동작)
@@ -92,4 +94,4 @@ src/main/webapp/css · js            스타일 · 보조 스크립트 (없어도
 - [Gson 2.11.0](https://github.com/google/gson) (Apache 2.0)
 - Jakarta Standard Tag Library 3.0 (EPL 2.0)
 - 화면: [Leaflet 1.9.4](https://leafletjs.com) · [Pretendard](https://github.com/orioncactus/pretendard) (CDN)
-- 지도 타일 © OpenStreetMap contributors
+- 지도 타일 © OpenStreetMap contributors · 길 찾기 [OSRM](https://project-osrm.org) (FOSSGIS)
