@@ -54,6 +54,29 @@ public class MapJson {
 		return p;
 	}
 
+	// 실제 길 구간들 → [{from, to, mode, path:[[위도, 경도]…]}] (from = 구간 시작 번호, firstNo 부터)
+	public static JsonArray legs(RoadRoute.Result road, int firstNo) {
+		JsonArray arr = new JsonArray();
+		int n = firstNo;
+		for (RoadRoute.Leg l : road.getLegs()) {
+			JsonObject g = new JsonObject();
+			g.addProperty("from", n);
+			g.addProperty("to", n + 1);
+			g.addProperty("mode", l.getMode());
+			JsonArray path = new JsonArray();
+			for (double[] p : l.getPath()) {
+				JsonArray xy = new JsonArray();
+				xy.add(Math.round(p[0] * 1e5) / 1e5);
+				xy.add(Math.round(p[1] * 1e5) / 1e5);
+				path.add(xy);
+			}
+			g.add("path", path);
+			arr.add(g);
+			n++;
+		}
+		return arr;
+	}
+
 	// 5판: 추천 동선 (출발점에서 주변 관광지를 도는 순서 + 어림 시각 · 이동 시간)
 	public static JsonObject route(NearbyRoute.Result r, int day, String area, String sigungu) {
 		JsonObject o = new JsonObject();
@@ -83,6 +106,8 @@ public class MapJson {
 			p.addProperty("legKm", st.getLegKm());
 			p.addProperty("legMin", st.getLegMin());
 			p.addProperty("legText", st.getLegText());
+			p.addProperty("legDist", st.getLegDist());
+			p.addProperty("road", st.isRoad());
 			p.addProperty("walk", st.isWalk());
 			p.addProperty("afterSunset", st.isAfterSunset());
 			WeatherVO w = s.getWeather();
@@ -90,6 +115,7 @@ public class MapJson {
 			stops.add(p);
 		}
 		o.add("stops", stops);
+		if (r.getRoad() != null) o.add("legs", legs(r.getRoad(), 1));
 		return o;
 	}
 
@@ -269,6 +295,7 @@ public class MapJson {
 				course.add(p);
 			}
 			km = plan.getTotalKm();
+			if (plan.getRoad() != null) o.add("legs", legs(plan.getRoad(), 1));
 		}
 		o.add("course", course);
 		o.addProperty("courseKm", km);

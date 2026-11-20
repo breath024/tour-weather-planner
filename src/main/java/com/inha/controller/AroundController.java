@@ -27,6 +27,7 @@ import com.inha.model.CourseStore;
 import com.inha.model.DayForecastVO;
 import com.inha.model.ForecastStitcher;
 import com.inha.model.RegionEvidence;
+import com.inha.model.RoadRoute;
 import com.inha.model.TravelScore;
 import com.inha.model.GridConverter;
 import com.inha.model.MapJson;
@@ -248,6 +249,11 @@ public class AroundController extends HttpServlet {
 			// 5판: 여기서 출발하는 추천 동선 (이미 받은 목록만 쓴다 · 추가 호출 없음)
 			int sunsetMin = ev != null && ev.getSun() != null && ev.getSun().isHasTimes() ? ev.getSun().getSunsetMinutes() : -1;
 			NearbyRoute.Result route = NearbyRoute.plan(spots, lat, lon, fDay, LocalTime.now(ZoneId.of("Asia/Seoul")), sunsetMin);
+			if (route.isAvailable()) { // 관광지 사이만 실제 길로 (누른 곳 · 내 위치는 바깥 길 찾기 서버로 보내지 않는다)
+				List<double[]> pts = new ArrayList<>();
+				for (NearbyRoute.Stop st : route.getStops()) pts.add(new double[] { st.getSpot().getLat(), st.getSpot().getLon() });
+				NearbyRoute.applyRoad(route, RoadRoute.through(pts));
+			}
 			o.add("route", MapJson.route(route, fDay, "", ""));
 			// 5판: 이 자리의 시 · 도 / 시 · 군 · 구 (모르면 null)
 			if (Area.isValid(fSido)) {

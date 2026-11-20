@@ -98,7 +98,17 @@ public class PlanBlockVO {
 	public String getWarn() { return warn; }
 	public void setWarn(String warn) { this.warn = warn; }
 	public double getNextKm() { return nextKm; }
-	public String getNextMove() { return Geo.moveText(nextKm); } // "걸어서 약 4분" (직선거리 어림, 마지막 칸은 "")
+	private RoadRoute.Leg road;   // 다음 곳까지 실제 길 (길 찾기를 못 받았으면 null → 직선거리 어림)
+	public RoadRoute.Leg getRoad() { return road; }
+	public void setRoad(RoadRoute.Leg road) { this.road = road; }
+	public boolean isHasRoad() { return road != null; }
+	// "걸어서 7분" · "차로 약 15분" (길 찾기) / "걸어서 약 4분" (직선거리 어림). 마지막 칸은 ""
+	public String getNextMove() { return road != null ? road.getText() : Geo.moveText(nextKm); }
+	// "길 따라 450m" / "직선 0.3km"
+	public String getNextDist() {
+		if (nextKm < 0) return "";
+		return road != null ? "길 따라 " + road.getDistText() : String.format(java.util.Locale.ROOT, "직선 %.1fkm", nextKm);
+	}
 	public void setNextKm(double nextKm) { this.nextKm = nextKm; }
 	public boolean isLast() { return last; }
 	public void setLast(boolean last) { this.last = last; }

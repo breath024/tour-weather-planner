@@ -221,7 +221,7 @@
 			li.setAttribute('data-n', String(s.n));
 			var leg = mk('p', 'rleg');
 			leg.appendChild(window.TW.icon(s.walk ? 'i-route' : 'i-arrow'));
-			leg.appendChild(mk('span', '', (i === 0 ? (opts.startName || '출발점') + '에서 ' : '') + s.legText + ' · ' + (+s.legKm).toFixed(1) + 'km'));
+			leg.appendChild(mk('span', '', (i === 0 ? (opts.startName || '출발점') + '에서 ' : '') + s.legText + ' · ' + (s.legDist || (+s.legKm).toFixed(1) + 'km')));
 			li.appendChild(leg);
 			var row = mk('div', 'rrow');
 			row.appendChild(mk('span', 'rnum', String(s.n)));
@@ -253,9 +253,9 @@
 		});
 		return ol;
 	};
-	// "14:10 출발 → 18:30 끝 · 4곳 · 이동 3.2km(어림 25분)"
+	// "14:10 출발 → 18:30 끝 · 4곳 · 이동 1.9km · 27분" (길 찾기를 못 받았으면 「어림」)
 	window.TW.routeSum = function (route) {
-		return route.start + ' 출발 → ' + route.end + ' 끝 · ' + (route.stops || []).length + '곳 · 이동 ' + (+route.totalKm).toFixed(1) + 'km (어림 ' + route.moveMin + '분)';
+		return route.start + ' 출발 → ' + route.end + ' 끝 · ' + (route.stops || []).length + '곳 · 이동 ' + (+route.totalKm).toFixed(1) + 'km · ' + (route.legs ? '' : '어림 ') + route.moveMin + '분';
 	};
 
 	// ---------- 내 위치 찾기 (첫 화면 · 지도 탐색). 못 받으면 why 문구와 함께 fail ----------

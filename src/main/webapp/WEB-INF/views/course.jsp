@@ -36,7 +36,7 @@
 
 	<c:if test="${not courseEmpty}">
 			<%-- 인쇄할 때만 보이는 머리: 어느 날 코스인지 · 몇 곳 · 총 거리 --%>
-			<p class="print-only print-head"><b>${shareMode ? '공유받은 코스' : '내 여행 코스'}</b> · ${fn:escapeXml(dayLabel)} · ${shareMode ? shareCount : courseCount}곳 · 총 직선거리 <fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</p>
+			<p class="print-only print-head"><b>${shareMode ? '공유받은 코스' : '내 여행 코스'}</b> · ${fn:escapeXml(dayLabel)} · ${shareMode ? shareCount : courseCount}곳 · ${roadOk ? '길 따라' : '총 직선거리'} <fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</p>
 		</c:if>
 		<%@ include file="/WEB-INF/jspf/flash.jspf" %>
 	<c:if test="${not empty error}">
@@ -136,7 +136,7 @@
 		</c:if>
 
 		<ul class="stats">
-			<li><b><fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/><small>km</small></b><span>총 직선거리</span></li>
+			<li><b><fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/><small>km</small></b><span>${roadOk ? '길 따라 총 거리' : '총 직선거리'}</span></li>
 			<li><b>${shareMode ? shareCount : courseCount}<small>곳</small></b><span>담은 곳</span></li>
 			<li><b>${fn:escapeXml(dayLabel)}</b><span>보고 있는 날</span></li>
 		</ul>
@@ -212,14 +212,14 @@
 							</c:forEach>
 						</div>
 						</c:if>
-						<c:if test="${st.nextKm >= 0}"><p class="leg">다음 곳까지 직선 <fmt:formatNumber value="${st.nextKm}" minFractionDigits="1" maxFractionDigits="1"/>km</p></c:if>
+						<c:if test="${st.nextKm >= 0}"><p class="leg">다음 곳까지 <b>${fn:escapeXml(st.nextMove)}</b> · ${fn:escapeXml(st.nextDist)}</p></c:if>
 					</li>
 				</c:forEach>
 			</ol>
 
 			<aside class="c-map mapsec" id="courseMapSec" aria-label="코스 경로 지도" hidden>
 				<div id="courseMap" class="map" role="application" aria-label="내 코스 경로 지도"></div>
-				<p class="note">번호는 담은 순서예요. 선은 직선 연결이라 실제 도로와 달라요.</p>
+				<p class="note">번호는 담은 순서예요. <c:choose><c:when test="${roadOk}">선은 오픈스트리트맵 길 찾기로 받은 길이에요(실선 걸어서 · 끊긴 선 차로).</c:when><c:otherwise>길 찾기를 받지 못해서 선은 순서를 잇는 직선이에요.</c:otherwise></c:choose></p>
 			</aside>
 		</div>
 

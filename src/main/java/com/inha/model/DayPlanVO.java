@@ -39,6 +39,10 @@ public class DayPlanVO {
 	public List<PlanBlockVO> getBlocks() { return blocks; }
 	public void setBlocks(List<PlanBlockVO> blocks) { this.blocks = blocks; }
 	public double getTotalKm() { return totalKm; }
+	private RoadRoute.Result road; // 칸 사이 실제 길 (못 받았으면 null)
+	public RoadRoute.Result getRoad() { return road; }
+	public void setRoad(RoadRoute.Result road) { this.road = road; }
+	public boolean isHasRoad() { return road != null; }
 	public void setTotalKm(double totalKm) { this.totalKm = totalKm; }
 	public String getIds() { return ids; }
 	public void setIds(String ids) { this.ids = ids; }

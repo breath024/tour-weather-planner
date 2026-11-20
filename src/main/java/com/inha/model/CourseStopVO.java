@@ -8,6 +8,14 @@ public class CourseStopVO {
 	private String weatherError;    // 날씨를 못 구한 이유 (정상이면 "")
 	private String warn;            // 실외인데 비 예보면 경고 문구 (아니면 "")
 	private double nextKm = -1;     // 다음 곳까지 직선거리(km). 마지막이거나 좌표가 없으면 -1
+	private RoadRoute.Leg road;     // 다음 곳까지 실제 길 (못 받았으면 null)
+	public RoadRoute.Leg getRoad() { return road; }
+	public void setRoad(RoadRoute.Leg road) { this.road = road; }
+	public String getNextMove() { return road != null ? road.getText() : Geo.moveText(nextKm); }
+	public String getNextDist() {
+		if (nextKm < 0) return "";
+		return road != null ? "길 따라 " + road.getDistText() : String.format(java.util.Locale.ROOT, "직선 %.1fkm", nextKm);
+	}
 	private boolean first;
 	private boolean last;
 	private ScoreVO score;          // 이 곳 · 그 날의 여행 지수 (못 만들면 null)

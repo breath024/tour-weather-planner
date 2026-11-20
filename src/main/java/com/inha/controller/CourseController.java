@@ -27,6 +27,7 @@ import com.inha.model.CourseStopVO;
 import com.inha.model.DayForecastVO;
 import com.inha.model.ForecastStitcher;
 import com.inha.model.MapJson;
+import com.inha.model.RoadRoute;
 import com.inha.model.RegionCodes;
 import com.inha.model.RegionEvidence;
 import com.inha.model.TravelScore;
@@ -315,6 +316,20 @@ public class CourseController extends HttpServlet {
 		request.setAttribute("warnFar", day >= 2);    // 모레부터는 「지금 발효 중인 특보」일 뿐 그 날 특보는 아직 모른다
 		double totalKm = Math.round(total * 10) / 10.0;
 		JsonObject map = new JsonObject();
+		// 담은 곳 사이를 실제 길로 (모두 좌표가 있을 때만 · 관광지 좌표만 보낸다 · 못 받으면 직선 그대로)
+		boolean road = false;
+		if (points.size() >= 2 && points.size() == items.size()) {
+			List<double[]> pts = new ArrayList<>();
+			for (CourseItem it : items) pts.add(new double[] { it.getLat(), it.getLon() });
+			RoadRoute.Result rr = RoadRoute.through(pts);
+			if (rr != null) {
+				for (int i = 0; i + 1 < stops.size(); i++) stops.get(i).setRoad(rr.getLegs().get(i));
+				map.add("legs", MapJson.legs(rr, 1));
+				totalKm = rr.getKm();
+				road = true;
+			}
+		}
+		request.setAttribute("roadOk", road);
 		map.add("points", points);
 		map.addProperty("totalKm", totalKm);
 

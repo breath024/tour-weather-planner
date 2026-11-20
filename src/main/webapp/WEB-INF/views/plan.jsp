@@ -53,7 +53,7 @@
 						<a class="btn" id="herePlan" href="${fn:escapeXml(homePlanHref)}">이 지역 하루 코스 보기</a>
 						<a class="btn btn-ghost" id="hereExplore" href="explore"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg>지도에서 더 보기</a>
 					</div>
-					<p class="note here-foot">이동 시간은 직선거리로 어림잡았어요. 머무는 시간은 실내 1시간 · 실외 50분이에요.</p>
+					<p class="note here-foot" id="hereFoot">곳 사이 이동은 오픈스트리트맵 길 찾기 기준이에요. 출발점에서 첫 곳까지는 내 위치를 바깥 서버로 보내지 않으려고 직선거리로 어림잡았어요. 머무는 시간은 실내 1시간 · 실외 50분이에요.</p>
 				</div>
 				<div class="here-mapbox"><div id="hereMap" class="map" role="application" aria-label="내 주변 추천 동선 지도" hidden></div></div>
 			</section>
@@ -253,7 +253,7 @@
 									<div id="routeMap" class="map" role="application" aria-label="추천 동선 지도"></div>
 									<button type="button" class="dp-fit" id="dpFitAll" hidden><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg>동선 전체 보기</button>
 								</div>
-								<p class="note">번호 순서대로 가요. 선은 실제 길이 아니라 순서를 잇는 직선이에요.</p>
+								<p class="note" id="dpRouteNote">번호 순서대로 가요.</p>
 							</div>
 						<ol class="timeline">
 							<c:forEach items="${dayPlan.blocks}" var="b">
@@ -300,7 +300,7 @@
 										<c:if test="${not empty b.warn}"><p class="warn-line"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><c:out value="${b.warn}"/></p></c:if>
 										<%@ include file="/WEB-INF/jspf/planB.jspf" %>
 									</div>
-									<c:if test="${b.nextKm >= 0}"><p class="tl-leg"><span>다음 곳까지 <b>${fn:escapeXml(b.nextMove)}</b> · 직선 <fmt:formatNumber value="${b.nextKm}" minFractionDigits="1" maxFractionDigits="1"/>km</span></p></c:if>
+									<c:if test="${b.nextKm >= 0}"><p class="tl-leg"><span>다음 곳까지 <b>${fn:escapeXml(b.nextMove)}</b> · ${fn:escapeXml(b.nextDist)}</span></p></c:if>
 								</li>
 							</c:forEach>
 						</ol>
@@ -310,7 +310,7 @@
 						<c:forEach items="${dayPlan.blocks}" var="rb"><c:if test="${rb.rainRisk}"><c:set var="anyRain" value="true"/></c:if></c:forEach>
 						<c:if test="${anyRain}"><p class="note planb-hint">비 예보가 있는 실외 칸에는 가까운 실내 대안을 같이 적어요.</p></c:if>
 						<div class="plan-foot">
-							<p>${dayPlan.size}곳 · 총 직선거리 <b><fmt:formatNumber value="${dayPlan.totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</b> <span class="sub-inline">· 이동 시간은 직선거리로 어림</span>
+							<p>${dayPlan.size}곳 · ${dayPlan.hasRoad ? '길 따라 총' : '총 직선거리'} <b><fmt:formatNumber value="${dayPlan.hasRoad ? dayPlan.road.km : dayPlan.totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</b> <span class="sub-inline">${dayPlan.hasRoad ? '· 이동 시간은 오픈스트리트맵 길 찾기 기준' : '· 이동 시간은 직선거리로 어림'}</span>
 								<c:if test="${not empty dayPlan.note}"><br><span class="note"><c:out value="${dayPlan.note}"/></span></c:if></p>
 							<%-- 통째로 담기: 서버가 각 번호를 다시 확인해서 담는다 --%>
 							<form method="post" action="course" class="course-add-plan">

@@ -30,9 +30,11 @@ import com.inha.model.DayScoreVO;
 import com.inha.model.ForecastStitcher;
 import com.inha.model.GridWeather;
 import com.inha.model.MapJson;
+import com.inha.model.PlanBlockVO;
 import com.inha.model.RecommendVO;
 import com.inha.model.Recommender;
 import com.inha.model.RegionEvidence;
+import com.inha.model.RoadRoute;
 import com.inha.model.TenDayVO;
 import com.inha.model.TourDAO;
 import com.inha.model.TourVO;
@@ -90,6 +92,19 @@ public class PlanController extends HttpServlet {
 
 	private static LocalTime nowKst() {
 		return LocalTime.now(ZoneId.of("Asia/Seoul"));
+	}
+
+	// 하루 코스 칸 사이 실제 길: 관광지 좌표만 보낸다. 못 받으면 아무것도 안 바꾼다
+	static void attachRoad(DayPlanVO plan) {
+		List<double[]> pts = new ArrayList<>();
+		for (PlanBlockVO b : plan.getBlocks()) {
+			if (b.getSpot() == null || !b.getSpot().isHasLocation()) return;
+			pts.add(new double[] { b.getSpot().getLat(), b.getSpot().getLon() });
+		}
+		RoadRoute.Result rr = RoadRoute.through(pts);
+		if (rr == null) return;
+		for (int i = 0; i + 1 < plan.getBlocks().size(); i++) plan.getBlocks().get(i).setRoad(rr.getLegs().get(i));
+		plan.setRoad(rr);
 	}
 
 	// 키워드: 앞뒤 공백 · 제어문자 제거, 연속 공백 하나로, 30자까지
@@ -423,6 +438,7 @@ public class PlanController extends HttpServlet {
 				}
 				// 보여 준 코스의 번호를 세션에 기억: '이 코스 통째로 담기'는 이 번호만 받는다
 				if (dayPlan.isAvailable()) {
+					attachRoad(dayPlan); // 칸 사이를 실제 길로 (오픈스트리트맵 길 찾기 · 못 받으면 직선 그대로)
 					CourseStore.rememberPlanIds(request.getSession(), dayPlan.getIds());
 					CourseStore.rememberPlanSlots(request.getSession(), dayPlan); // 칸 시간도 기억 → 담으면 달력(.ics) 시간이 된다
 				}

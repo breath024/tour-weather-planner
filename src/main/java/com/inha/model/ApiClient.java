@@ -380,6 +380,20 @@ public class ApiClient {
 		return root;
 	}
 
+	// 공공데이터포털이 아닌 곳(길 찾기 RoadRoute)을 같은 HttpClient 로 부른다. 본문과 상태 코드를 그대로 돌려준다(캐시 · 예산은 부르는 쪽이)
+	static String[] getPlain(String url, String userAgent, int timeoutSec) throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(url))
+				.timeout(Duration.ofSeconds(timeoutSec))
+				.header("User-Agent", userAgent)
+				.header("Accept", "application/json")
+				.GET()
+				.build();
+		System.out.println("[TourWeather] 외부 호출 #" + liveCalls.incrementAndGet() + " " + url);
+		HttpResponse<String> response = client().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+		return new String[] { String.valueOf(response.statusCode()), response.body() == null ? "" : response.body() };
+	}
+
 	// 이 주소의 응답이 캐시에 있나 (있으면 부르지 않아도 된다는 뜻). 공유 링크 남용 막기에서 「새 번호」를 가를 때 쓴다
 	public static boolean isCached(String url, long ttlMillis) {
 		return ttlMillis > 0 && cacheGet(cacheKey(url)) != null;

@@ -23,12 +23,13 @@ public class NearbyRoute {
 	public static class Stop {
 		private final TourVO spot;
 		private final int no;
-		private final double legKm;     // 앞 지점(처음은 출발점)에서 직선거리
-		private final int legMin;       // 어림 이동 시간
-		private final boolean walk;
-		private final int arrive;       // 하루 0시부터 분
-		private final int leave;
-		private final boolean afterSunset;
+		private double legKm;           // 앞 지점(처음은 출발점)에서 직선거리 · 길을 받으면 길 거리
+		private int legMin;             // 이동 시간 (어림 또는 길 찾기)
+		private boolean walk;
+		private RoadRoute.Leg road;     // 앞 곳에서 오는 실제 길 (첫 곳 · 못 받았으면 null)
+		private int arrive;             // 하루 0시부터 분
+		private int leave;
+		private boolean afterSunset;
 
 		Stop(TourVO spot, int no, double legKm, int arrive, int leave, boolean afterSunset) {
 			this.spot = spot;
@@ -46,7 +47,9 @@ public class NearbyRoute {
 		public double getLegKm() { return legKm; }
 		public int getLegMin() { return legMin; }
 		public boolean isWalk() { return walk; }
-		public String getLegText() { return Geo.moveText(legKm); }
+		public boolean isRoad() { return road != null; }
+		public String getLegText() { return road != null ? road.getText() : Geo.moveText(legKm); }
+		public String getLegDist() { return road != null ? "길 따라 " + road.getDistText() : String.format(java.util.Locale.ROOT, "직선 %.1fkm", legKm); }
 		public String getArrive() { return clock(arrive); }
 		public String getLeave() { return clock(leave); }
 		public boolean isAfterSunset() { return afterSunset; }
@@ -58,7 +61,11 @@ public class NearbyRoute {
 		private int moveMin;
 		private int startMin;
 		private int endMin;
+		private int sunsetMin = -1;
 		private String note = "";
+		private RoadRoute.Result road;
+
+		public RoadRoute.Result getRoad() { return road; }
 
 		public List<Stop> getStops() { return stops; }
 		public boolean isAvailable() { return stops.size() >= 2; }
@@ -88,6 +95,7 @@ public class NearbyRoute {
 			start = FUTURE_START;
 		}
 		r.startMin = start;
+		r.sunsetMin = sunsetMin;
 
 		double curLat = lat, curLon = lon;
 		int t = start;
@@ -120,6 +128,34 @@ public class NearbyRoute {
 		for (Stop s : r.stops) if (!s.getSpot().isFit()) anyNoFit = true;
 		if (anyNoFit && r.note.isEmpty()) r.note = "날씨에 잘 맞는 곳이 모자라서 덜 맞는 곳도 넣었어요.";
 		return r;
+	}
+
+	// 둘째 곳부터 구간을 실제 길로 바꾸고 도착 · 떠나는 시각을 다시 센다 (첫 구간 = 출발점에서는 위치를 보내지 않아서 어림 그대로)
+	public static void applyRoad(Result r, RoadRoute.Result road) {
+		if (road == null || road.getLegs().size() != r.stops.size() - 1) return;
+		r.road = road;
+		for (int i = 1; i < r.stops.size(); i++) {
+			Stop s = r.stops.get(i);
+			RoadRoute.Leg l = road.getLegs().get(i - 1);
+			s.road = l;
+			s.legKm = l.getKm();
+			s.legMin = l.getMinutes();
+			s.walk = l.isWalk();
+		}
+		int t = r.startMin;
+		double km = 0;
+		int move = 0;
+		for (Stop s : r.stops) {
+			s.arrive = t + s.legMin;
+			s.leave = s.arrive + (s.spot.isIndoor() ? STAY_IN : STAY_OUT);
+			s.afterSunset = r.sunsetMin > 0 && !s.spot.isIndoor() && s.arrive >= r.sunsetMin;
+			km += s.legKm;
+			move += s.legMin;
+			t = s.leave;
+		}
+		r.totalKm = km;
+		r.moveMin = move;
+		r.endMin = t;
 	}
 
 	// 분 → "14:10" (자정을 넘기면 다음 날 시각으로)

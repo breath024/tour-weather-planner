@@ -284,7 +284,7 @@
 					mapBox.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
 				} : null
 			}));
-			var rn = el('p', 'note', '이동 시간은 직선거리로 어림잡았어요. 머무는 시간은 실내 1시간 · 실외 50분으로 잡았어요.' + (d.route.note ? ' ' + d.route.note : ''));
+			var rn = el('p', 'note', (d.route.legs ? '곳 사이는 오픈스트리트맵 길 찾기 기준이고, 누른 곳에서 첫 곳까지만 직선거리 어림이에요.' : '이동 시간은 직선거리로 어림잡았어요.') + ' 머무는 시간은 실내 1시간 · 실외 50분으로 잡았어요.' + (d.route.note ? ' ' + d.route.note : ''));
 			rs.appendChild(rn);
 			panel.appendChild(rs);
 		}
@@ -356,7 +356,7 @@
 		var inRoute = {};
 		if (d.route && d.route.available) {
 			// 동선: 누른 곳(빨간 핀)에서 번호 순서로. 동선에 든 곳은 점 대신 번호 마커
-			routeLayer = T.drawRoute(map, d.route.stops, { popExtra: function (st) { return '동선 ' + st.n + '번 · ' + st.arrive + ' 도착'; } });
+			routeLayer = T.drawRoute(map, d.route.stops, { legs: d.route.legs, popExtra: function (st) { return '동선 ' + st.n + '번 · ' + st.arrive + ' 도착'; } });
 			if (pin && d.route.stops.length) L.polyline([pin.getLatLng(), [d.route.stops[0].lat, d.route.stops[0].lon]], { className: 'route-lead', color: '#17264a', weight: 3, opacity: 0.9, dashArray: '1 8', lineCap: 'round', interactive: false }).addTo(routeLayer.group);
 			d.route.stops.forEach(function (st) { inRoute[st.id] = st.n; });
 		}
@@ -392,7 +392,7 @@
 				if (!d.ok) { if (hasMap) markers.clearLayers(); message(d.message, true); return; }
 				if (hasMap) {
 					drawMarkers(d);
-					if (routeLayer && fitNext) T.fit(map, [[lat, lon]].concat(routeLayer.pts), !reduceMotion, 16);
+					if (routeLayer && fitNext) T.fit(map, [[lat, lon]].concat(routeLayer.pts), !reduceMotion, 16, true);
 				}
 				fitNext = false;
 				render(d);

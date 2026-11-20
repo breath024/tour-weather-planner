@@ -114,10 +114,10 @@
 			L.marker([s.lat, s.lon], { icon: ic, title: s.title }).bindPopup(T.popup(s)).addTo(otherLayer);
 		});
 		routeLayer = T.drawRoute(map, route, {
-			start: [lat, lon], startLabel: mine ? '내 위치' : '출발',
+			start: [lat, lon], startLabel: mine ? '내 위치' : '출발', legs: d.route && d.route.legs,
 			popExtra: function (s) { return '동선 ' + s.n + '번 · ' + s.arrive + ' 도착'; }
 		});
-		T.fit(map, routeLayer.pts, false, 16);
+		T.fit(map, routeLayer.pts, false, 16, true);
 	}
 
 	function render(d, lat, lon, mine, why) {
@@ -143,6 +143,8 @@
 				} : null
 			}));
 			sum.textContent = window.TW.routeSum(d.route) + (d.route.note ? ' · ' + d.route.note : '');
+			var foot = document.getElementById('hereFoot');
+			if (foot && !d.route.legs) foot.textContent = '길 찾기를 받지 못해서 이동 시간은 직선거리로 어림잡았어요. 머무는 시간은 실내 1시간 · 실외 50분이에요.';
 		} else {
 			message((d.route && d.route.note) || d.emptyMessage || '주변에 관광지가 적어서 동선을 짜지 못했어요.');
 		}

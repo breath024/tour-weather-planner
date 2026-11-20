@@ -120,10 +120,10 @@
 	TWMap.core = core;
 
 	// 점들이 다 보이게 맞춘다. animate === false 면 움직임 없이 바로 (움직임 줄이기 설정 · 처음 그릴 때)
-	// 돌려주는 값 = 화면 맞출 때 뺀 멀리 떨어진 점 수
-	function fit(map, pts, animate, maxZoom) {
+	// 돌려주는 값 = 화면 맞출 때 뺀 멀리 떨어진 점 수. keepAll 이면 하나도 빼지 않는다(동선 지도: 번호가 다 보여야 한다)
+	function fit(map, pts, animate, maxZoom, keepAll) {
 		if (!pts.length) return 0;
-		var c = core(pts);
+		var c = keepAll ? { keep: pts, drop: 0 } : core(pts);
 		var z = maxZoom || 15;
 		var o = { paddingTopLeft: [64, 40], paddingBottomRight: [32, 40], maxZoom: z }; // 왼쪽 위 확대 단추 자리를 비운다
 		if (animate === false) o.animate = false;
@@ -151,9 +151,22 @@
 			L.marker(opts.start, { icon: TWMap.me(opts.startLabel || ''), keyboard: false, interactive: false, zIndexOffset: 900 }).addTo(g);
 			if (pts.length) L.polyline([opts.start, pts[0]], { className: 'route-lead', color: '#17264a', weight: 3, opacity: 0.9, dashArray: '1 8', lineCap: 'round', interactive: false }).addTo(g);
 		}
-		if (pts.length > 1) {
-			L.polyline(pts, { className: 'route-case', color: '#ffffff', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g);
-			L.polyline(pts, { className: 'route-main', color: '#c9402b', weight: 4, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g);
+		// 구간마다: 길 찾기로 받은 길(legs)이 있으면 그 모양대로, 없으면 직선. 걸어서 = 실선 · 차로 = 끊긴 선
+		var byFrom = {};
+		(opts.legs || []).forEach(function (lg) { if (lg && lg.path && lg.path.length > 1) byFrom[lg.from] = lg; });
+		var segs = [];
+		for (var i = 0; i + 1 < stops.length; i++) {
+			var lg = byFrom[stops[i].n];
+			segs.push({ path: lg ? lg.path : [pts[i], pts[i + 1]], car: !!(lg && lg.mode === 'car'), road: !!lg });
+		}
+		segs.forEach(function (sg) { L.polyline(sg.path, { className: 'route-case', color: '#ffffff', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g); });
+		segs.forEach(function (sg) {
+			L.polyline(sg.path, { className: 'route-main' + (sg.car ? ' car' : '') + (sg.road ? '' : ' straight'), color: '#c9402b', weight: 4, opacity: 1, dashArray: sg.car ? '10 8' : null, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g);
+		});
+		var roadCount = segs.filter(function (sg) { return sg.road; }).length;
+		if (roadCount && map.attributionControl && !map._twRouteAttr) {
+			map._twRouteAttr = true; // 길 찾기 출처 + 「지도 고치기」 (FOSSGIS 이용 조건)
+			map.attributionControl.addAttribution('길 찾기 <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS OSRM</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">지도 고치기</a>');
 		}
 		var marks = {};
 		stops.forEach(function (s) {
@@ -161,7 +174,7 @@
 			m.bindPopup(TWMap.popup(s, opts.popExtra ? opts.popExtra(s) : ''));
 			marks[s.n] = m;
 		});
-		return { group: g, marks: marks, pts: opts.start ? [opts.start].concat(pts) : pts };
+		return { group: g, marks: marks, pts: opts.start ? [opts.start].concat(pts) : pts, road: roadCount, segs: segs.length };
 	};
 
 	// ---------- /plan: 전체 관광지 + 그 자리 날씨 + 하루 코스 + 행사 + 시간 슬라이더 + 분류 거르기 ----------
@@ -235,7 +248,12 @@
 
 		var route = null;
 		if (course.length > 1) {
-			route = L.polyline(course.map(function (c) { return [c.lat, c.lon]; }), {
+			var rpts = course.map(function (c) { return [c.lat, c.lon]; });
+			if (d.legs && d.legs.length === course.length - 1) { // 길 찾기로 받은 실제 길이 있으면 그 모양대로
+				rpts = [];
+				d.legs.forEach(function (lg) { rpts = rpts.concat(lg.path || []); });
+			}
+			route = L.polyline(rpts, {
 				color: '#17264a', className: 'route-line', weight: 3, opacity: 0.8, dashArray: '2 8', lineCap: 'round'
 			}).addTo(map);
 		}
@@ -557,16 +575,9 @@
 		if (!sec || !box || !d || !(d.points || []).length) return;
 		sec.hidden = false;
 		var map = TWMap.create(box);
-		var pts = [];
-		d.points.forEach(function (p) {
-			var m = L.marker([p.lat, p.lon], { icon: TWMap.num(p.n, p.warn), title: p.title }).addTo(map);
-			m.bindPopup(TWMap.popup(p, p.warn ? '실외인데 비 예보가 있어요' : ''));
-			pts.push([p.lat, p.lon]);
-		});
-		if (pts.length > 1) {
-			L.polyline(pts, { color: '#17264a', className: 'route-line', weight: 3, opacity: 0.8, dashArray: '2 8', lineCap: 'round' }).addTo(map);
-		}
-		fit(map, pts);
+		// 담은 순서대로 번호 + 실제 길(받았으면) 또는 직선
+		var r = TWMap.drawRoute(map, d.points, { legs: d.legs, popExtra: function (p) { return p.warn ? '실외인데 비 예보가 있어요' : ''; } });
+		fit(map, r.pts, false, 16, true);
 	}
 
 	// ---------- /plan 하루 코스(추천 동선): 코스 번호 + 굵은 선만 크게. 타임라인 칸의 「지도」 단추와 이어진다 ----------
@@ -578,9 +589,12 @@
 		wrap.hidden = false;
 		document.querySelector('.dp-grid') && document.querySelector('.dp-grid').classList.add('has-map');
 		var map = TWMap.create(box);
-		var r = TWMap.drawRoute(map, d.course, { popExtra: function (s) { return '동선 ' + s.n + '번 · ' + s.time; } });
-		fit(map, r.pts, false, 16);
-		window.addEventListener('load', function () { map.invalidateSize(); fit(map, r.pts, false, 16); }); // 글꼴 · 사진이 다 뜬 뒤 칸 크기로 다시 맞춘다
+		var r = TWMap.drawRoute(map, d.course, { legs: d.legs, popExtra: function (s) { return '동선 ' + s.n + '번 · ' + s.time; } });
+		var rn = document.getElementById('dpRouteNote');
+		if (rn) rn.textContent = r.road ? '번호 순서대로 가요. 선은 오픈스트리트맵 길 찾기로 받은 길이에요(실선 걸어서 · 끊긴 선 차로).'
+			: '번호 순서대로 가요. 길 찾기를 받지 못해서 선은 순서를 잇는 직선이에요.';
+		fit(map, r.pts, false, 16, true);
+		window.addEventListener('load', function () { map.invalidateSize(); fit(map, r.pts, false, 16, true); }); // 글꼴 · 사진이 다 뜬 뒤 칸 크기로 다시 맞춘다
 		var items = document.querySelectorAll('.tl-item[data-n]');
 		function mark(n, on) {
 			var m = r.marks[n];
@@ -604,7 +618,7 @@
 			});
 		});
 		var all = document.getElementById('dpFitAll');
-		if (all) { all.hidden = false; all.addEventListener('click', function () { map.closePopup(); fit(map, r.pts, !reduceMotion, 16); }); }
+		if (all) { all.hidden = false; all.addEventListener('click', function () { map.closePopup(); fit(map, r.pts, !reduceMotion, 16, true); }); }
 	}
 
 	function start() { initPlan(); initDayRoute(); initDetail(); initCourse(); }
