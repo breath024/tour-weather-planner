@@ -39,6 +39,13 @@ public class Area {
 		return SIDO;
 	}
 
+	// 기본 자리: 내 위치를 못 받을 때 보여 줄 곳 = 인천 개항장 일대(인천역 · 차이나타운). 시군구는 2026 개편 뒤 제물포구(125)
+	public static final double HOME_LAT = 37.4757;
+	public static final double HOME_LON = 126.6175;
+	public static final String HOME_NAME = "인천 개항장 일대";
+	public static final String HOME_AREA = "28";
+	public static final String HOME_SIGUNGU = "125";
+
 	public static boolean isValid(String code) {
 		return code != null && SIDO.containsKey(code);
 	}

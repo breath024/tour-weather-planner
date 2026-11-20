@@ -54,6 +54,45 @@ public class MapJson {
 		return p;
 	}
 
+	// 5판: 추천 동선 (출발점에서 주변 관광지를 도는 순서 + 어림 시각 · 이동 시간)
+	public static JsonObject route(NearbyRoute.Result r, int day, String area, String sigungu) {
+		JsonObject o = new JsonObject();
+		o.addProperty("available", r.isAvailable());
+		o.addProperty("note", r.getNote());
+		if (!r.isAvailable()) return o;
+		o.addProperty("start", r.getStart());
+		o.addProperty("end", r.getEnd());
+		o.addProperty("totalKm", r.getTotalKm());
+		o.addProperty("moveMin", r.getMoveMin());
+		JsonArray stops = new JsonArray();
+		for (NearbyRoute.Stop st : r.getStops()) {
+			TourVO s = st.getSpot();
+			JsonObject p = new JsonObject();
+			p.addProperty("n", st.getNo());
+			p.addProperty("id", s.getContentId());
+			p.addProperty("title", s.getTitle());
+			p.addProperty("type", s.getTypeName());
+			p.addProperty("lat", s.getLat());
+			p.addProperty("lon", s.getLon());
+			p.addProperty("indoor", s.isIndoor());
+			p.addProperty("fit", s.isFit());
+			p.addProperty("image", s.getImage());
+			p.addProperty("url", detailUrl(s.getContentId(), s.getContentTypeId(), day, area, sigungu));
+			p.addProperty("arrive", st.getArrive());
+			p.addProperty("leave", st.getLeave());
+			p.addProperty("legKm", st.getLegKm());
+			p.addProperty("legMin", st.getLegMin());
+			p.addProperty("legText", st.getLegText());
+			p.addProperty("walk", st.isWalk());
+			p.addProperty("afterSunset", st.isAfterSunset());
+			WeatherVO w = s.getWeather();
+			p.addProperty("icon", w == null ? "" : w.getIcon());
+			stops.add(p);
+		}
+		o.add("stops", stops);
+		return o;
+	}
+
 	// 3판: 축제 · 행사 마커 하나 (그 행사 자리 격자 날씨 + 야외 행사 비 경고)
 	public static JsonObject event(TourVO e, int day, String area, String sigungu) {
 		JsonObject p = new JsonObject();
@@ -220,9 +259,12 @@ public class MapJson {
 				p.addProperty("indoor", s.isIndoor());
 				p.addProperty("time", b.getTimeLabel());
 				p.addProperty("icon", b.getIcon());
+				p.addProperty("sky", b.getSky());
+				p.addProperty("type", s.getTypeName());
 				p.addProperty("temp", b.getTemp());
 				p.addProperty("pop", b.getPop());
 				p.addProperty("warn", !b.getWarn().isEmpty());
+				p.addProperty("next", b.getNextMove()); // 다음 곳까지 어림 이동 시간 (마지막은 "")
 				p.addProperty("url", detailUrl(s.getContentId(), s.getContentTypeId(), day, area, sigungu));
 				course.add(p);
 			}

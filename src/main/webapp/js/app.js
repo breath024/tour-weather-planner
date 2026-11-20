@@ -204,6 +204,81 @@
 		setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3700);
 	};
 
+	// ---------- 추천 동선 목록 (첫 화면 · 지도 탐색이 같이 쓴다) ----------
+	// route = /api/around 의 "route" 칸. 서버 값은 textContent 로만 넣는다
+	// opts.startName: 첫 구간 앞에 붙일 출발점 이름 · opts.onPin(stop): 「지도에서 보기」 단추를 누르면
+	function mk(tag, cls, text) {
+		var e = document.createElement(tag);
+		if (cls) e.className = cls;
+		if (text !== undefined && text !== null) e.textContent = text;
+		return e;
+	}
+	window.TW.routeList = function (route, opts) {
+		opts = opts || {};
+		var ol = mk('ol', 'rlist');
+		(route.stops || []).forEach(function (s, i) {
+			var li = mk('li', 'rstop' + (s.fit ? '' : ' nofit'));
+			li.setAttribute('data-n', String(s.n));
+			var leg = mk('p', 'rleg');
+			leg.appendChild(window.TW.icon(s.walk ? 'i-route' : 'i-arrow'));
+			leg.appendChild(mk('span', '', (i === 0 ? (opts.startName || '출발점') + '에서 ' : '') + s.legText + ' · ' + (+s.legKm).toFixed(1) + 'km'));
+			li.appendChild(leg);
+			var row = mk('div', 'rrow');
+			row.appendChild(mk('span', 'rnum', String(s.n)));
+			var body = mk('div', 'rbody');
+			var t = mk('p', 'rtime');
+			t.appendChild(mk('b', '', s.arrive));
+			t.appendChild(mk('span', 'rleave', '~ ' + s.leave));
+			var bd = mk('span', 'badge ' + (s.indoor ? 'in' : 'out'));
+			bd.appendChild(window.TW.icon(s.indoor ? 'i-museum' : 'i-tree'));
+			bd.appendChild(document.createTextNode(s.indoor ? '실내' : '실외'));
+			t.appendChild(bd);
+			if (!s.fit && opts.weather) t.appendChild(mk('span', 'rtag', '날씨엔 덜 맞음'));
+			body.appendChild(t);
+			var a = mk('a', 'rtitle', s.title);
+			a.href = /^detail\?/.test(s.url || '') ? s.url : '#'; // detail? 로 시작하는 주소만 링크로
+			body.appendChild(a);
+			if (s.afterSunset) body.appendChild(mk('p', 'rnote', '해가 진 뒤에 도착해요. 야경을 볼 곳이 아니면 순서를 바꿔 보세요.'));
+			row.appendChild(body);
+			if (opts.onPin) {
+				var b = mk('button', 'rpin');
+				b.type = 'button';
+				b.appendChild(window.TW.icon('i-pin'));
+				b.appendChild(mk('span', 'sr-only', s.title + ' 지도에서 보기'));
+				b.addEventListener('click', function () { opts.onPin(s); });
+				row.appendChild(b);
+			}
+			li.appendChild(row);
+			ol.appendChild(li);
+		});
+		return ol;
+	};
+	// "14:10 출발 → 18:30 끝 · 4곳 · 이동 3.2km(어림 25분)"
+	window.TW.routeSum = function (route) {
+		return route.start + ' 출발 → ' + route.end + ' 끝 · ' + (route.stops || []).length + '곳 · 이동 ' + (+route.totalKm).toFixed(1) + 'km (어림 ' + route.moveMin + '분)';
+	};
+
+	// ---------- 내 위치 찾기 (첫 화면 · 지도 탐색). 못 받으면 why 문구와 함께 fail ----------
+	// ok(lat, lon, accuracyM) · fail(why). 한국 밖이면 fail 로 돌린다
+	window.TW.locate = function (ok, fail) {
+		if (!navigator.geolocation) { fail('이 브라우저는 위치 기능을 지원하지 않아요'); return; }
+		var done = false;
+		var timer = setTimeout(function () { if (!done) { done = true; fail('위치를 찾는 데 시간이 오래 걸려요'); } }, 9000);
+		navigator.geolocation.getCurrentPosition(function (p) {
+			if (done) return;
+			done = true;
+			clearTimeout(timer);
+			var la = p.coords.latitude, lo = p.coords.longitude;
+			if (la < 33 || la > 39 || lo < 124 || lo > 132) { fail('내 위치가 한국 밖이에요'); return; }
+			ok(la, lo, p.coords.accuracy || 0);
+		}, function (e) {
+			if (done) return;
+			done = true;
+			clearTimeout(timer);
+			fail(e && e.code === 1 ? '위치 권한이 꺼져 있어요' : '위치를 받지 못했어요');
+		}, { timeout: 8000, maximumAge: 600000 });
+	};
+
 	// ---------- 인쇄 버튼 (JS 가 있을 때만 보임. 종이 모양은 CSS @media print) ----------
 	document.querySelectorAll('[data-print]').forEach(function (b) {
 		if (typeof window.print !== 'function') return;

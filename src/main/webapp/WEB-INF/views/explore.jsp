@@ -26,13 +26,13 @@
 <div class="js-only">
 	<div class="wrap explore-head">
 		<h1>지도 탐색</h1>
-		<p>지도를 누르거나 내 위치를 쓰면 그 근처 관광지와 날씨가 나와요.</p>
+		<p>내 위치에서 시작해요. 지도를 누르면 그 자리 근처 관광지 · 날씨와 거기서 출발하는 추천 동선이 나와요.</p>
 		<%@ include file="/WEB-INF/jspf/flash.jspf" %>
 	</div>
 
 	<%-- explore.js 가 읽는 값: data-* --%>
 	<div id="explore" class="wrap explore" data-csrf="${fn:escapeXml(csrfToken)}" data-api="api/around" data-course="course"
-		data-lat="${startLat}" data-lon="${startLon}" data-zoom="${startZoom}">
+		data-lat="${startLat}" data-lon="${startLon}" data-zoom="${startZoom}" data-given="${startGiven}" data-home-name="${fn:escapeXml(homeName)}">
 
 		<div class="explore-bar">
 			<div class="f">
@@ -60,6 +60,7 @@
 			</div>
 			<button type="button" id="exploreLocate" class="btn"><svg class="ic" aria-hidden="true"><use href="#i-locate"/></svg>내 위치</button>
 			<div class="quick" role="group" aria-label="주요 도시로 이동">
+				<button type="button" data-lat="37.4757" data-lon="126.6175">인천</button>
 				<button type="button" data-lat="37.5665" data-lon="126.978">서울</button>
 				<button type="button" data-lat="35.1796" data-lon="129.0756">부산</button>
 				<button type="button" data-lat="37.7519" data-lon="128.8761">강릉</button>
@@ -78,7 +79,7 @@
 			<aside id="explorePanel" class="explore-panel" data-vscroll aria-live="polite" aria-label="주변 정보">
 				<div class="hint" id="exploreHint">
 					<svg class="ic" aria-hidden="true"><use href="#i-locate"/></svg>
-					<p><b>지도를 눌러 보세요</b>누른 곳 반경 5km 안의 관광지와 날씨가 여기에 나와요. 지도를 못 쓰면 위 도시 버튼을 눌러도 돼요.</p>
+					<p><b>내 위치를 찾는 중이에요</b>위치를 못 받으면 인천 개항장 일대를 보여 줘요. 지도를 누르면 그 자리 반경 5km 안의 관광지 · 날씨 · 추천 동선이 여기에 나와요.</p>
 				</div>
 			</aside>
 		</div>

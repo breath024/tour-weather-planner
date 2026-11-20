@@ -8,7 +8,9 @@
 	var mapBox = document.getElementById('exploreMap');
 	var panel = document.getElementById('explorePanel');
 	var fail = document.getElementById('exploreMapFail');
-	var map, markers, pin, ring, last = null, seq = 0, byId = {};
+	var map, markers, pin, ring, last = null, seq = 0, byId = {}, routeLayer = null, startName = '누른 곳';
+	var fitNext = false; // 위치 · 도시 단추로 옮겼을 때만 동선이 다 보이게 맞춘다 (지도를 누른 때는 그대로)
+	var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	function el(tag, cls, text) {
 		var e = document.createElement(tag);
@@ -266,6 +268,26 @@
 		panel.textContent = '';
 		var wn = warnBlock(d.evidence);
 		if (wn) panel.appendChild(wn);
+		if (d.route && d.route.available) {
+			var rs = el('section', 'rsec');
+			var rh = el('div', 'block-head');
+			rh.appendChild(el('h2', '', startName + '에서 출발하는 추천 동선'));
+			rh.appendChild(el('p', '', window.TW.routeSum(d.route)));
+			rs.appendChild(rh);
+			rs.appendChild(window.TW.routeList(d.route, {
+				startName: startName, weather: !!d.weather,
+				onPin: hasMap ? function (st) {
+					var m = routeLayer && routeLayer.marks[st.n];
+					if (!m) return;
+					map.setView(m.getLatLng(), Math.max(map.getZoom(), 15), { animate: !reduceMotion });
+					m.openPopup();
+					mapBox.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+				} : null
+			}));
+			var rn = el('p', 'note', '이동 시간은 직선거리로 어림잡았어요. 머무는 시간은 실내 1시간 · 실외 50분으로 잡았어요.' + (d.route.note ? ' ' + d.route.note : ''));
+			rs.appendChild(rn);
+			panel.appendChild(rs);
+		}
 		if (d.weather) panel.appendChild(weatherCard(d));
 		else if (d.weatherError) {
 			var wb = el('div', 'alert warn');
@@ -329,8 +351,17 @@
 
 	function drawMarkers(d) {
 		markers.clearLayers();
+		if (routeLayer) { map.removeLayer(routeLayer.group); routeLayer = null; }
 		byId = {};
+		var inRoute = {};
+		if (d.route && d.route.available) {
+			// 동선: 누른 곳(빨간 핀)에서 번호 순서로. 동선에 든 곳은 점 대신 번호 마커
+			routeLayer = T.drawRoute(map, d.route.stops, { popExtra: function (st) { return '동선 ' + st.n + '번 · ' + st.arrive + ' 도착'; } });
+			if (pin && d.route.stops.length) L.polyline([pin.getLatLng(), [d.route.stops[0].lat, d.route.stops[0].lon]], { className: 'route-lead', color: '#17264a', weight: 3, opacity: 0.9, dashArray: '1 8', lineCap: 'round', interactive: false }).addTo(routeLayer.group);
+			d.route.stops.forEach(function (st) { inRoute[st.id] = st.n; });
+		}
 		(d.spots || []).forEach(function (s) {
+			if (inRoute[s.id] && routeLayer) { byId[s.id] = routeLayer.marks[inRoute[s.id]]; return; }
 			var ic = L.divIcon({
 				html: el('div', 'mdot ' + (s.indoor ? 'in' : 'out') + (s.fit ? '' : ' nofit')),
 				className: 'pill-wrap', iconSize: [0, 0]
@@ -359,15 +390,21 @@
 			.then(function (d) {
 				if (mine !== seq) return;
 				if (!d.ok) { if (hasMap) markers.clearLayers(); message(d.message, true); return; }
-				if (hasMap) drawMarkers(d);
+				if (hasMap) {
+					drawMarkers(d);
+					if (routeLayer && fitNext) T.fit(map, [[lat, lon]].concat(routeLayer.pts), !reduceMotion, 16);
+				}
+				fitNext = false;
 				render(d);
 				if (window.innerWidth < 900) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			})
 			.catch(function () { if (mine === seq) message('불러오지 못했어요. 잠시 뒤 다시 눌러 보세요.', true); });
 	}
 
-	function go(lat, lon, zoom) {
-		if (hasMap) map.setView([lat, lon], zoom || Math.max(map.getZoom(), 11));
+	function go(lat, lon, zoom, name) {
+		startName = name || '이 자리';
+		fitNext = true;
+		if (hasMap) map.setView([lat, lon], zoom || Math.max(map.getZoom(), 13));
 		query(lat, lon);
 	}
 
@@ -376,22 +413,31 @@
 			map = T.create(mapBox, { wheel: true, drag: true });
 			map.setView([+root.dataset.lat, +root.dataset.lon], +root.dataset.zoom);
 			markers = L.layerGroup().addTo(map);
-			map.on('click', function (e) { query(e.latlng.lat, e.latlng.lng); });
+			map.on('click', function (e) { startName = '누른 곳'; fitNext = false; query(e.latlng.lat, e.latlng.lng); });
 		} else { // 지도 라이브러리가 못 떴으면 지도 칸만 숨기고 안내
 			mapBox.hidden = true;
 			fail.hidden = false;
 			document.querySelectorAll('.explore-mapwrap .legend').forEach(function (n) { n.hidden = true; }); // 없는 마커 범례는 숨김
 		}
-		document.getElementById('exploreLocate').addEventListener('click', function () {
-			if (!navigator.geolocation) { message('이 브라우저는 위치 기능을 지원하지 않아요. 도시 버튼이나 지도를 눌러 보세요.', true); return; }
+		var homeName = root.dataset.homeName || '기본 자리';
+		function locate(auto) {
 			loading();
-			navigator.geolocation.getCurrentPosition(function (p) {
-				go(p.coords.latitude, p.coords.longitude, 12);
-			}, function () { message('위치를 가져오지 못했어요. 브라우저에서 위치를 허용하거나 지도를 직접 눌러 보세요.', true); }, { timeout: 10000 });
-		});
+			window.TW.locate(function (la, lo, acc) {
+				go(la, lo, 14, acc > 3000 ? '내 위치(대략)' : '내 위치');
+			}, function (why) {
+				if (auto) { // 처음 열 때 위치를 못 받으면 기본 자리(인천 개항장 일대)로
+					go(+root.dataset.lat, +root.dataset.lon, 14, homeName);
+					window.TW.toast(why + '. ' + homeName + '을 보여 줄게요.', false);
+				} else message(why + '. 브라우저에서 위치를 허용하거나 지도를 직접 눌러 보세요.', true);
+			});
+		}
+		document.getElementById('exploreLocate').addEventListener('click', function () { locate(false); });
 		document.querySelectorAll('.quick button').forEach(function (b) {
-			b.addEventListener('click', function () { go(+b.dataset.lat, +b.dataset.lon, 11); });
+			b.addEventListener('click', function () { go(+b.dataset.lat, +b.dataset.lon, 13, b.textContent.trim()); });
 		});
+		// 처음 자리: 주소로 받은 자리 → 내 위치 → 기본 자리
+		if (root.dataset.given === 'true') go(+root.dataset.lat, +root.dataset.lon, 14, '고른 자리');
+		else locate(true);
 		// 날짜나 종류를 바꾸면 같은 자리를 다시 조회
 		['exploreDay', 'exploreType'].forEach(function (id) {
 			document.getElementById(id).addEventListener('change', function () { if (last) query(last[0], last[1]); });

@@ -98,6 +98,7 @@ public class PlanBlockVO {
 	public String getWarn() { return warn; }
 	public void setWarn(String warn) { this.warn = warn; }
 	public double getNextKm() { return nextKm; }
+	public String getNextMove() { return Geo.moveText(nextKm); } // "걸어서 약 4분" (직선거리 어림, 마지막 칸은 "")
 	public void setNextKm(double nextKm) { this.nextKm = nextKm; }
 	public boolean isLast() { return last; }
 	public void setLast(boolean last) { this.last = last; }

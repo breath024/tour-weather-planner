@@ -9,10 +9,13 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -27,6 +30,7 @@ import com.inha.model.RegionEvidence;
 import com.inha.model.TravelScore;
 import com.inha.model.GridConverter;
 import com.inha.model.MapJson;
+import com.inha.model.NearbyRoute;
 import com.inha.model.RateLimiter;
 import com.inha.model.RecommendVO;
 import com.inha.model.Recommender;
@@ -149,6 +153,8 @@ public class AroundController extends HttpServlet {
 			final LocalDate date = Area.dayOf(fDay);
 			CompletableFuture<RegionEvidence> fEv = ApiClient.asyncOuter(
 					() -> RegionEvidence.load(key, fSido, fSigungu, fAddr, fLat, fLon, date));
+			// 5판: 이 자리가 어느 시 · 군 · 구인지 이름으로 (「이 지역 하루 코스」 링크에 쓴다. 시군구 목록은 24시간 캐시)
+			CompletableFuture<List<String[]>> fGu = Area.isValid(fSido) ? ApiClient.async(() -> tour.sigunguList(fSido)) : null;
 
 			boolean midDay = false;
 			String midNote = "";
@@ -238,6 +244,27 @@ public class AroundController extends HttpServlet {
 					? "주변 관광지를 불러오지 못했어요. 잠시 뒤 다시 눌러 보세요."
 					: "이 근처엔 등록된 관광지가 적어요. 지도에서 다른 곳을 눌러 보세요.");
 			o.addProperty("courseCount", CourseStore.count(session));
+
+			// 5판: 여기서 출발하는 추천 동선 (이미 받은 목록만 쓴다 · 추가 호출 없음)
+			int sunsetMin = ev != null && ev.getSun() != null && ev.getSun().isHasTimes() ? ev.getSun().getSunsetMinutes() : -1;
+			NearbyRoute.Result route = NearbyRoute.plan(spots, lat, lon, fDay, LocalTime.now(ZoneId.of("Asia/Seoul")), sunsetMin);
+			o.add("route", MapJson.route(route, fDay, "", ""));
+			// 5판: 이 자리의 시 · 도 / 시 · 군 · 구 (모르면 null)
+			if (Area.isValid(fSido)) {
+				String guName = "";
+				if (fGu != null) {
+					try {
+						for (String[] gu : fGu.get(3, TimeUnit.SECONDS)) if (gu[0].equals(fSigungu)) guName = gu[1];
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					} catch (Exception e) { /* 이름 없이 시 · 도만 */ }
+				}
+				JsonObject region = new JsonObject();
+				region.addProperty("area", fSido);
+				region.addProperty("sigungu", guName.isEmpty() ? "" : fSigungu);
+				region.addProperty("name", Area.name(fSido) + (guName.isEmpty() ? "" : " " + guName));
+				o.add("region", region);
+			}
 			write(response, 200, o);
 		} catch (ApiException e) {
 			write(response, 502, error("API", e.getMessage()));

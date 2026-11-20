@@ -104,14 +104,65 @@
 		return box;
 	};
 
-	// animate === false 면 움직임 없이 바로 맞춘다 (움직임 줄이기 설정 · 처음 그릴 때)
-	function fit(map, pts, animate) {
-		if (!pts.length) return;
-		var o = { paddingTopLeft: [64, 40], paddingBottomRight: [32, 40], maxZoom: 13 }; // 왼쪽 위 확대 단추 자리를 비운다
-		if (animate === false) o.animate = false;
-		if (pts.length === 1) { map.setView(pts[0], 13, animate === false ? { animate: false } : undefined); return; }
-		map.fitBounds(L.latLngBounds(pts), o);
+	// 멀리 튄 점은 처음 화면을 맞출 때 뺀다: 좌표가 엉뚱하게 등록된 곳(인천 목록에 경북 좌표 등) · 먼 섬.
+	// 가운데(중앙값)에서 80% 지점 거리의 3배(최소 25km) 밖이면 「멀리 떨어진 곳」. 마커는 그대로 있고 지도를 줄이면 보인다
+	function core(pts) {
+		if (pts.length < 4) return { keep: pts, drop: 0 };
+		function med(a) { a = a.slice().sort(function (x, y) { return x - y; }); var m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+		var c = [med(pts.map(function (p) { return p[0]; })), med(pts.map(function (p) { return p[1]; }))];
+		var k = Math.cos(c[0] * Math.PI / 180);
+		var d = pts.map(function (p) { var dy = (p[0] - c[0]) * 111, dx = (p[1] - c[1]) * 111 * k; return Math.sqrt(dx * dx + dy * dy); });
+		var s = d.slice().sort(function (x, y) { return x - y; });
+		var lim = Math.max(25, s[Math.floor((s.length - 1) * 0.8)] * 3);
+		var keep = pts.filter(function (p, i) { return d[i] <= lim; });
+		return { keep: keep, drop: pts.length - keep.length };
 	}
+	TWMap.core = core;
+
+	// 점들이 다 보이게 맞춘다. animate === false 면 움직임 없이 바로 (움직임 줄이기 설정 · 처음 그릴 때)
+	// 돌려주는 값 = 화면 맞출 때 뺀 멀리 떨어진 점 수
+	function fit(map, pts, animate, maxZoom) {
+		if (!pts.length) return 0;
+		var c = core(pts);
+		var z = maxZoom || 15;
+		var o = { paddingTopLeft: [64, 40], paddingBottomRight: [32, 40], maxZoom: z }; // 왼쪽 위 확대 단추 자리를 비운다
+		if (animate === false) o.animate = false;
+		if (c.keep.length === 1) map.setView(c.keep[0], Math.min(z, 15), animate === false ? { animate: false } : undefined);
+		else map.fitBounds(L.latLngBounds(c.keep), o);
+		return c.drop;
+	}
+	TWMap.fit = fit;
+
+	// 내 위치 · 출발점 마커: 파란 점 + 옅은 물결, 이름표(선택)
+	TWMap.me = function (label) {
+		var w = el('div', 'mme');
+		w.appendChild(el('i', 'mme-dot'));
+		if (label) w.appendChild(el('span', 'mme-t', label));
+		return L.divIcon({ html: w, className: 'pill-wrap', iconSize: [0, 0] });
+	};
+
+	// 동선 그리기: 흰 테두리를 두른 굵은 선 + 번호 마커. start([위도, 경도])가 있으면 출발점과 첫 구간(점선)도.
+	// stops = [{n, title, lat, lon, ...팝업 값}] · opts.popExtra(s) = 팝업 덧말
+	TWMap.drawRoute = function (map, stops, opts) {
+		opts = opts || {};
+		var g = L.featureGroup().addTo(map);
+		var pts = stops.map(function (s) { return [s.lat, s.lon]; });
+		if (opts.start) {
+			L.marker(opts.start, { icon: TWMap.me(opts.startLabel || ''), keyboard: false, interactive: false, zIndexOffset: 900 }).addTo(g);
+			if (pts.length) L.polyline([opts.start, pts[0]], { className: 'route-lead', color: '#17264a', weight: 3, opacity: 0.9, dashArray: '1 8', lineCap: 'round', interactive: false }).addTo(g);
+		}
+		if (pts.length > 1) {
+			L.polyline(pts, { className: 'route-case', color: '#ffffff', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g);
+			L.polyline(pts, { className: 'route-main', color: '#c9402b', weight: 4, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g);
+		}
+		var marks = {};
+		stops.forEach(function (s) {
+			var m = L.marker([s.lat, s.lon], { icon: TWMap.num(s.n, s.warn), title: s.title, riseOnHover: true, zIndexOffset: 1000 - s.n }).addTo(g);
+			m.bindPopup(TWMap.popup(s, opts.popExtra ? opts.popExtra(s) : ''));
+			marks[s.n] = m;
+		});
+		return { group: g, marks: marks, pts: opts.start ? [opts.start].concat(pts) : pts };
+	};
 
 	// ---------- /plan: 전체 관광지 + 그 자리 날씨 + 하루 코스 + 행사 + 시간 슬라이더 + 분류 거르기 ----------
 	var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -206,7 +257,7 @@
 				if (it.kind === 'spot' && ok) n++;
 			});
 			if (map.closePopup) map.closePopup();
-			fit(map, visiblePoints(), !reduceMotion);
+			showFar(fit(map, visiblePoints(), !reduceMotion));
 			return n;
 		}
 		TWMap.plan = { setCat: setCat };
@@ -257,7 +308,13 @@
 		}
 		map.on('moveend zoomend', scheduleDeclutter);
 
-		fit(map, visiblePoints(), false);
+		var farNote = document.getElementById('mapFar');
+		function showFar(n) { // 함수 선언이라 위의 setCat 에서도 쓸 수 있다
+			if (!farNote) return;
+			farNote.textContent = n > 0 ? '멀리 떨어진 ' + n + '곳은 처음 화면에서 뺐어요. 지도를 줄이면 보여요.' : '';
+			farNote.hidden = !(n > 0);
+		}
+		showFar(fit(map, visiblePoints(), false));
 		box.classList.toggle('zoom-far', map.getZoom() < 10);
 		scheduleDeclutter();
 
@@ -512,6 +569,44 @@
 		fit(map, pts);
 	}
 
-	function start() { initPlan(); initDetail(); initCourse(); }
+	// ---------- /plan 하루 코스(추천 동선): 코스 번호 + 굵은 선만 크게. 타임라인 칸의 「지도」 단추와 이어진다 ----------
+	function initDayRoute() {
+		var wrap = document.getElementById('dpMap');
+		var box = document.getElementById('routeMap');
+		var d = TWMap.parse('planMapData');
+		if (!wrap || !box || !d || !(d.course || []).length) return;
+		wrap.hidden = false;
+		document.querySelector('.dp-grid') && document.querySelector('.dp-grid').classList.add('has-map');
+		var map = TWMap.create(box);
+		var r = TWMap.drawRoute(map, d.course, { popExtra: function (s) { return '동선 ' + s.n + '번 · ' + s.time; } });
+		fit(map, r.pts, false, 16);
+		window.addEventListener('load', function () { map.invalidateSize(); fit(map, r.pts, false, 16); }); // 글꼴 · 사진이 다 뜬 뒤 칸 크기로 다시 맞춘다
+		var items = document.querySelectorAll('.tl-item[data-n]');
+		function mark(n, on) {
+			var m = r.marks[n];
+			var e = m && m.getElement();
+			if (e) e.classList.toggle('on', on);
+			if (m && on) m.setZIndexOffset(3000); else if (m) m.setZIndexOffset(1000 - n);
+		}
+		Array.prototype.forEach.call(items, function (li) {
+			var n = +li.getAttribute('data-n');
+			if (!r.marks[n]) return;
+			li.addEventListener('mouseenter', function () { mark(n, true); });
+			li.addEventListener('mouseleave', function () { mark(n, false); });
+			var b = li.querySelector('.tl-pin');
+			if (!b) return;
+			b.hidden = false;
+			b.addEventListener('click', function () {
+				var m = r.marks[n];
+				map.setView(m.getLatLng(), Math.max(map.getZoom(), 15), { animate: !reduceMotion });
+				m.openPopup();
+				if (window.innerWidth < 900) wrap.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+			});
+		});
+		var all = document.getElementById('dpFitAll');
+		if (all) { all.hidden = false; all.addEventListener('click', function () { map.closePopup(); fit(map, r.pts, !reduceMotion, 16); }); }
+	}
+
+	function start() { initPlan(); initDayRoute(); initDetail(); initCourse(); }
 	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

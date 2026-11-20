@@ -71,6 +71,12 @@ public class PlanController extends HttpServlet {
 		request.setAttribute("keyword", keyword);
 		request.setAttribute("keywordSearch", !keyword.isEmpty());
 		request.setAttribute("mapJson", "{\"center\":null,\"spots\":[],\"course\":[],\"courseKm\":0}"); // 결과가 없어도 항상 있음
+		// 첫 화면 「지금 내 주변」: 내 위치를 못 받으면 보여 줄 기본 자리(인천 개항장 일대)
+		request.setAttribute("homeLat", Area.HOME_LAT);
+		request.setAttribute("homeLon", Area.HOME_LON);
+		request.setAttribute("homeName", Area.HOME_NAME);
+		request.setAttribute("homeArea", Area.HOME_AREA);
+		request.setAttribute("homeSigungu", Area.HOME_SIGUNGU);
 
 		boolean hasArea = area != null && !area.isEmpty();
 		if (hasArea && !Area.isValid(area)) {
