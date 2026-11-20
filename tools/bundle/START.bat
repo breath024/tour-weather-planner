@@ -17,7 +17,7 @@ set "JAVA_HOME="
 set "JRE_HOME=%HERE%jre"
 set "CATALINA_HOME=%HERE%tomcat"
 set "CATALINA_BASE=%HERE%tomcat"
-set "CATALINA_OPTS=-Xmx256m -Dfile.encoding=UTF-8"
+set "CATALINA_OPTS=-Xmx256m -Dfile.encoding=UTF-8 -XX:-UseBASE64Intrinsics"
 if not defined TW_NOBROWSER start "" /b cmd /c call "%~f0" :open
 call "%CATALINA_HOME%\bin\catalina.bat" run
 exit /b
