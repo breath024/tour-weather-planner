@@ -283,6 +283,35 @@ public class ScoreCases {
 		System.out.println("맑은 날 최고 1° 당 가장 큰 점수 변화 " + worst + "점 (" + worstAt + ")");
 		if (worst > 8) failing.add("계단: 최고 " + worstAt + " 에서 점수가 " + worst + "점 바뀜 (8점 이하여야 함)");
 
+		// 관광지 팁이 제목과 어긋나지 않나: 더운 날(최고 15° 이상)에 선선 · 쌀쌀 · 따뜻하게 말이 나오면 안 된다
+		com.inha.model.TourVO inSpot = new com.inha.model.TourVO();
+		inSpot.setIndoor(true);
+		int tipBad = 0;
+		String tipEx = "";
+		for (String sky : skies) {
+			for (int max = 15; max <= 29; max++) {
+				for (int drop : drops) {
+					for (int pop : new int[] { 0, 10, 20 }) {
+						WeatherVO w = dayWeather(sky, max - drop, max, pop);
+						for (com.inha.model.TourVO sp : new com.inha.model.TourVO[] { outdoorSpot, inSpot }) {
+							String tip = Recommender.spotTip(sp, w);
+							if (tip.contains("선선") || tip.contains("쌀쌀") || tip.contains("따뜻하게")) {
+								tipBad++;
+								if (tipEx.isEmpty()) tipEx = sky + " 최고" + max + " 최저" + (max - drop) + " 강수" + pop + "% → " + tip;
+							}
+						}
+					}
+				}
+			}
+		}
+		System.out.println("관광지 팁 쓸어보기(최고 15~29°): 어긋남 " + tipBad);
+		if (tipBad > 0) failing.add("관광지 팁에 선선 · 쌀쌀 말이 더운 날에 나옴 " + tipBad + "건 (예 " + tipEx + ")");
+		// 선선한 날(최고 14° 이하, 날씨 감점이 큰 날)은 선선 팁이 그대로 나온다
+		String coolTip = Recommender.spotTip(outdoorSpot, dayWeather("흐림", 6, 12, 10));
+		boolean coolOk = coolTip.contains("선선") && Recommender.recommend(dayWeather("흐림", 6, 12, 10)).getTitle().contains("선선");
+		System.out.println("선선한 날 팁: " + coolTip + " → " + (coolOk ? "통과" : "실패"));
+		if (!coolOk) failing.add("선선한 날 팁이 제목과 안 맞음: " + coolTip);
+
 		// 참고표: 맑은 날(최저 = 최고 - 8, 먼지 좋음 · 자외선 4 · 붐빔 30%) 최고기온별 실외 · 실내 점수와 추천 방향
 		System.out.println();
 		System.out.println("| 최고 | 최저 | 실외 | 실내 | 추천 방향 |");

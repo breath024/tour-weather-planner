@@ -190,7 +190,11 @@ public class Recommender {
 		} else if (w.getMaxPop() >= 30) {
 			tip = spot.isIndoor() ? "날씨와 상관없이 즐길 수 있는 실내예요." : "비 올 수도 있어요. 접는 우산을 챙기세요.";
 		} else if (!outdoorOk(w)) {
-			tip = spot.isIndoor() ? "선선한 날 들르기 좋은 실내예요." : "선선하거나 흐려요. 따뜻하게 입고 다니세요.";
+			if (max <= COOL_MAX) { // 제목(recommend)과 같은 기온 나눔
+				tip = spot.isIndoor() ? "선선한 날 들르기 좋은 실내예요." : "선선하거나 흐려요. 따뜻하게 입고 다니세요.";
+			} else {
+				tip = spot.isIndoor() ? "날씨와 상관없이 즐길 수 있는 실내예요." : "하늘이 맑진 않지만 다닐 만해요. 가볍게 둘러보세요.";
+			}
 		} else {
 			tip = spot.isIndoor() ? "날씨가 좋으니 근처 실외 명소와 같이 들러 보세요." : "야외 관광하기 좋은 날씨예요.";
 		}
