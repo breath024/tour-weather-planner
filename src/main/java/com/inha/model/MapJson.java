@@ -108,6 +108,7 @@ public class MapJson {
 			p.addProperty("legText", st.getLegText());
 			p.addProperty("legDist", st.getLegDist());
 			p.addProperty("road", st.isRoad());
+			p.addProperty("same", st.isSame());
 			p.addProperty("walk", st.isWalk());
 			p.addProperty("afterSunset", st.isAfterSunset());
 			WeatherVO w = s.getWeather();

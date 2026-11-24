@@ -110,6 +110,10 @@ public class PlanBlockVO {
 		return road != null ? "길 따라 " + road.getDistText() : String.format(java.util.Locale.ROOT, "직선 %.1fkm", nextKm);
 	}
 	public void setNextKm(double nextKm) { this.nextKm = nextKm; }
+	// 다음곳 같은자리인지 (30m 안)
+	public boolean isNextSame() { return Geo.samePlace(nextKm); }
+	// 저녁칸이면 운영시간 확인필요 띄움
+	public boolean isHoursCheck() { return !mid && startHour >= 17; }
 	public boolean isLast() { return last; }
 	public void setLast(boolean last) { this.last = last; }
 }

@@ -36,7 +36,7 @@
 
 	<c:if test="${not courseEmpty}">
 			<%-- 인쇄할 때만 보이는 머리: 어느 날 코스인지 · 몇 곳 · 총 거리 --%>
-			<p class="print-only print-head"><b>${shareMode ? '공유받은 코스' : '내 여행 코스'}</b> · ${fn:escapeXml(dayLabel)} · ${shareMode ? shareCount : courseCount}곳 · ${roadOk ? '길 따라' : '총 직선거리'} <fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</p>
+			<p class="print-only print-head"><b>${shareMode ? '공유받은 코스' : '내 여행 코스'}</b> · ${fn:escapeXml(dayLabel)} · ${shareMode ? shareCount : courseCount}곳 · <c:choose><c:when test="${(shareMode ? shareCount : courseCount) > 1 and totalKm < 0.03}">모두 같은 위치</c:when><c:otherwise>${roadOk ? '길 따라' : '총 직선거리'} <fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</c:otherwise></c:choose></p>
 		</c:if>
 		<%@ include file="/WEB-INF/jspf/flash.jspf" %>
 	<c:if test="${not empty error}">
@@ -136,7 +136,10 @@
 		</c:if>
 
 		<ul class="stats">
-			<li><b><fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/><small>km</small></b><span>${roadOk ? '길 따라 총 거리' : '총 직선거리'}</span></li>
+			<c:choose>
+				<c:when test="${(shareMode ? shareCount : courseCount) > 1 and totalKm < 0.03}"><li><b>같은 위치</b><span>모두 같은 자리로 등록된 곳</span></li></c:when>
+				<c:otherwise><li><b><fmt:formatNumber value="${totalKm}" minFractionDigits="1" maxFractionDigits="1"/><small>km</small></b><span>${roadOk ? '길 따라 총 거리' : '총 직선거리'}</span></li></c:otherwise>
+			</c:choose>
 			<li><b>${shareMode ? shareCount : courseCount}<small>곳</small></b><span>담은 곳</span></li>
 			<li><b>${fn:escapeXml(dayLabel)}</b><span>보고 있는 날</span></li>
 		</ul>
@@ -212,7 +215,7 @@
 							</c:forEach>
 						</div>
 						</c:if>
-						<c:if test="${st.nextKm >= 0}"><p class="leg">다음 곳까지 <b>${fn:escapeXml(st.nextMove)}</b> · ${fn:escapeXml(st.nextDist)}</p></c:if>
+						<c:if test="${st.nextKm >= 0}"><p class="leg"><c:choose><c:when test="${st.nextSame}">다음 곳은 <b>같은 위치로 등록된 곳</b>이에요</c:when><c:otherwise>다음 곳까지 <b>${fn:escapeXml(st.nextMove)}</b> · ${fn:escapeXml(st.nextDist)}</c:otherwise></c:choose></p></c:if>
 					</li>
 				</c:forEach>
 			</ol>

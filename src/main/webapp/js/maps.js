@@ -76,8 +76,11 @@
 	};
 
 	// 번호 마커
-	TWMap.num = function (n, warn) {
-		return L.divIcon({ html: el('div', 'mnum' + (warn ? ' warn' : ''), String(n)), className: 'pill-wrap', iconSize: [0, 0] });
+	TWMap.num = function (n, warn, shift) {
+		// 같은자리 번호 겹치면 옆으로 밀어줌
+		var o = { html: el('div', 'mnum' + (warn ? ' warn' : ''), String(n)), className: 'pill-wrap', iconSize: [0, 0] };
+		if (shift) o.iconAnchor = [-32 * shift, 0];
+		return L.divIcon(o);
 	};
 
 	// 팝업 내용: 이름 · 종류 · 날씨 · 상세 링크
@@ -156,26 +159,32 @@
 		var byFrom = {};
 		(opts.legs || []).forEach(function (lg) { if (lg && lg.path && lg.path.length > 1) byFrom[lg.from] = lg; });
 		var segs = [];
+		var SAME_M = 30; // 서버 SAME_KM이랑 같게
 		for (var i = 0; i + 1 < stops.length; i++) {
 			var lg = byFrom[stops[i].n];
-			segs.push({ path: lg ? lg.path : [pts[i], pts[i + 1]], car: !!(lg && lg.mode === 'car'), road: !!lg });
+			var same = map.distance(pts[i], pts[i + 1]) < SAME_M;
+			segs.push({ path: lg ? lg.path : [pts[i], pts[i + 1]], car: !!(lg && lg.mode === 'car'), road: !!lg, same: same });
 		}
 		segs.forEach(function (sg) { L.polyline(sg.path, { className: 'route-case', color: '#ffffff', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g); });
 		segs.forEach(function (sg) {
 			L.polyline(sg.path, { className: 'route-main' + (sg.car ? ' car' : '') + (sg.road ? '' : ' straight'), color: '#c9402b', weight: 4, opacity: 1, dashArray: sg.car ? '10 8' : null, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(g);
 		});
 		var roadCount = segs.filter(function (sg) { return sg.road; }).length;
+		var sameCount = segs.filter(function (sg) { return sg.same && !sg.road; }).length; // 같은자리라 길 없는 구간
 		if (roadCount && map.attributionControl && !map._twRouteAttr) {
 			map._twRouteAttr = true; // 길 찾기 출처 + 「지도 고치기」 (FOSSGIS 이용 조건)
 			map.attributionControl.addAttribution('길 찾기 <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS OSRM</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">지도 고치기</a>');
 		}
 		var marks = {};
-		stops.forEach(function (s) {
-			var m = L.marker([s.lat, s.lon], { icon: TWMap.num(s.n, s.warn), title: s.title, riseOnHover: true, zIndexOffset: 1000 - s.n }).addTo(g);
+		var placed = []; // 놓은 번호 자리
+		stops.forEach(function (s, k) {
+			var shift = placed.filter(function (q) { return map.distance(q, pts[k]) < SAME_M; }).length;
+			placed.push(pts[k]);
+			var m = L.marker([s.lat, s.lon], { icon: TWMap.num(s.n, s.warn, shift), title: s.title, riseOnHover: true, zIndexOffset: 1000 - s.n }).addTo(g);
 			m.bindPopup(TWMap.popup(s, opts.popExtra ? opts.popExtra(s) : ''));
 			marks[s.n] = m;
 		});
-		return { group: g, marks: marks, pts: opts.start ? [opts.start].concat(pts) : pts, road: roadCount, segs: segs.length };
+		return { group: g, marks: marks, pts: opts.start ? [opts.start].concat(pts) : pts, road: roadCount, same: sameCount, segs: segs.length };
 	};
 
 	// ---------- /plan: 전체 관광지 + 그 자리 날씨 + 하루 코스 + 행사 + 시간 슬라이더 + 분류 거르기 ----------
@@ -592,8 +601,10 @@
 		var map = TWMap.create(box);
 		var r = TWMap.drawRoute(map, d.course, { legs: d.legs, popExtra: function (s) { return '동선 ' + s.n + '번 · ' + s.time; } });
 		var rn = document.getElementById('dpRouteNote');
-		if (rn) rn.textContent = r.road ? '번호 순서대로 가요. 선은 오픈스트리트맵 길 찾기로 받은 길이에요(실선 걸어서 · 끊긴 선 차로).'
-			: '번호 순서대로 가요. 길 찾기를 받지 못해서 선은 순서를 잇는 직선이에요.';
+		if (rn) rn.textContent = (r.road ? '번호 순서대로 가요. 선은 오픈스트리트맵 길 찾기로 받은 길이에요(실선 걸어서 · 끊긴 선 차로).'
+			: r.same && r.same === r.segs ? '번호 순서대로 가요.'
+			: '번호 순서대로 가요. 길 찾기를 받지 못해서 선은 순서를 잇는 직선이에요.')
+			+ (r.same ? ' 같은 위치로 등록된 곳은 번호를 옆으로 비켜 그렸어요.' : '');
 		fit(map, r.pts, false, 16, true);
 		window.addEventListener('load', function () { map.invalidateSize(); fit(map, r.pts, false, 16, true); }); // 글꼴 · 사진이 다 뜬 뒤 칸 크기로 다시 맞춘다
 		var items = document.querySelectorAll('.tl-item[data-n]');

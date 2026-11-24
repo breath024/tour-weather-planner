@@ -16,6 +16,7 @@ public class CourseStopVO {
 		if (nextKm < 0) return "";
 		return road != null ? "길 따라 " + road.getDistText() : String.format(java.util.Locale.ROOT, "직선 %.1fkm", nextKm);
 	}
+	public boolean isNextSame() { return Geo.samePlace(nextKm); } // 다음곳 같은자리인지
 	private boolean first;
 	private boolean last;
 	private ScoreVO score;          // 이 곳 · 그 날의 여행 지수 (못 만들면 null)

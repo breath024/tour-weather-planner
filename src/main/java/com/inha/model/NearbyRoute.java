@@ -30,10 +30,12 @@ public class NearbyRoute {
 		private int arrive;             // 하루 0시부터 분
 		private int leave;
 		private boolean afterSunset;
+		private boolean same;
 
 		Stop(TourVO spot, int no, double legKm, int arrive, int leave, boolean afterSunset) {
 			this.spot = spot;
 			this.no = no;
+			this.same = Geo.samePlace(legKm);   // 반올림 전에 봄
 			this.legKm = Math.round(legKm * 10) / 10.0;
 			this.legMin = Geo.moveMinutes(legKm);
 			this.walk = Geo.walkable(legKm);
@@ -48,6 +50,7 @@ public class NearbyRoute {
 		public int getLegMin() { return legMin; }
 		public boolean isWalk() { return walk; }
 		public boolean isRoad() { return road != null; }
+		public boolean isSame() { return same; }   // 앞곳이랑 같은자리인지
 		public String getLegText() { return road != null ? road.getText() : Geo.moveText(legKm); }
 		public String getLegDist() { return road != null ? "길 따라 " + road.getDistText() : String.format(java.util.Locale.ROOT, "직선 %.1fkm", legKm); }
 		public String getArrive() { return clock(arrive); }

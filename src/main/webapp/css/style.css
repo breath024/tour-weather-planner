@@ -212,6 +212,10 @@ form.course-add { margin: 0; }
 .mid-note .ic { width: 16px; height: 16px; margin-top: 3px; flex: 0 0 auto; }
 .sun-line { display: flex; gap: 6px; align-items: flex-start; margin-top: var(--s2); padding: 6px var(--s3); border-radius: var(--r2); background: var(--warn-bg); font-size: var(--fs-2); color: var(--warn-ink); font-weight: 600; }
 .sun-line .ic { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; }
+/* 운영시간 확인필요 */
+.hours-line a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.plan-foot .hours-note { display: flex; gap: 6px; align-items: flex-start; flex: 1 1 100%; margin: 0; color: var(--warn-ink); font-weight: 600; }
+.plan-foot .hours-note .ic { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; }
 
 /* 기상특보 띠: 발효 중이면 붉은 선, 예비특보는 노랑, 다른 지역 소식만 있으면 차분한 파랑 */
 .warnbar { display: flex; gap: var(--s3); align-items: flex-start; margin: var(--s4) 0; padding: var(--s3) var(--s4); border-radius: var(--r3); border: 1px solid var(--bad-line); background: var(--bad-bg); color: var(--bad-strong); }

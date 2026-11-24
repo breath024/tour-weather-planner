@@ -221,7 +221,9 @@
 			li.setAttribute('data-n', String(s.n));
 			var leg = mk('p', 'rleg');
 			leg.appendChild(window.TW.icon(s.walk ? 'i-route' : 'i-arrow'));
-			leg.appendChild(mk('span', '', (i === 0 ? (opts.startName || '출발점') + '에서 ' : '') + s.legText + ' · ' + (s.legDist || (+s.legKm).toFixed(1) + 'km')));
+			leg.appendChild(mk('span', '', s.same
+				? (i === 0 ? (opts.startName || '출발점') + ' 바로 앞이에요' : '앞 곳과 같은 위치로 등록된 곳이에요')
+				: (i === 0 ? (opts.startName || '출발점') + '에서 ' : '') + s.legText + ' · ' + (s.legDist || (+s.legKm).toFixed(1) + 'km')));
 			li.appendChild(leg);
 			var row = mk('div', 'rrow');
 			row.appendChild(mk('span', 'rnum', String(s.n)));

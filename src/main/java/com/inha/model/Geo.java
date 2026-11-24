@@ -21,6 +21,13 @@ public class Geo {
 	static final double ROAD_FACTOR = 1.3;
 	static final double WALK_MAX_KM = 1.5;
 
+	// 30m 안이면 같은자리로 봄
+	static final double SAME_KM = 0.03;
+
+	public static boolean samePlace(double straightKm) {
+		return straightKm >= 0 && straightKm < SAME_KM;
+	}
+
 	public static boolean walkable(double straightKm) {
 		return straightKm >= 0 && straightKm * ROAD_FACTOR <= WALK_MAX_KM;
 	}

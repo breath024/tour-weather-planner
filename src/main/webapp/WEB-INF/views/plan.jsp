@@ -298,9 +298,11 @@
 										<c:if test="${not empty b.sunsetNote}"><p class="sun-line"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><c:out value="${b.sunsetNote}"/></p></c:if>
 										<c:if test="${b.fallback}"><p class="note">${b.good ? '실외' : '실내'} 관광지가 모자라 ${s.indoor ? '실내' : '실외'}로 채웠어요.</p></c:if>
 										<c:if test="${not empty b.warn}"><p class="warn-line"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><c:out value="${b.warn}"/></p></c:if>
+										<%-- 저녁칸 운영시간 확인필요 --%>
+										<c:if test="${b.hoursCheck}"><p class="warn-line hours-line"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span><b>운영시간 확인 필요</b> · 저녁 시간이라 문을 닫았을 수 있어요. <a href="${fn:escapeXml(blockHref)}">상세에서 이용시간 보기</a></span></p></c:if>
 										<%@ include file="/WEB-INF/jspf/planB.jspf" %>
 									</div>
-									<c:if test="${b.nextKm >= 0}"><p class="tl-leg"><span>다음 곳까지 <b>${fn:escapeXml(b.nextMove)}</b> · ${fn:escapeXml(b.nextDist)}</span></p></c:if>
+									<c:if test="${b.nextKm >= 0}"><p class="tl-leg"><span><c:choose><c:when test="${b.nextSame}">다음 곳은 <b>같은 위치로 등록된 곳</b>이에요</c:when><c:otherwise>다음 곳까지 <b>${fn:escapeXml(b.nextMove)}</b> · ${fn:escapeXml(b.nextDist)}</c:otherwise></c:choose></span></p></c:if>
 								</li>
 							</c:forEach>
 						</ol>
@@ -310,8 +312,16 @@
 						<c:forEach items="${dayPlan.blocks}" var="rb"><c:if test="${rb.rainRisk}"><c:set var="anyRain" value="true"/></c:if></c:forEach>
 						<c:if test="${anyRain}"><p class="note planb-hint">비 예보가 있는 실외 칸에는 가까운 실내 대안을 같이 적어요.</p></c:if>
 						<div class="plan-foot">
-							<p>${dayPlan.size}곳 · ${dayPlan.hasRoad ? '길 따라 총' : '총 직선거리'} <b><fmt:formatNumber value="${dayPlan.hasRoad ? dayPlan.road.km : dayPlan.totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</b> <span class="sub-inline">${dayPlan.hasRoad ? '· 이동 시간은 오픈스트리트맵 길 찾기 기준' : '· 이동 시간은 직선거리로 어림'}</span>
+							<c:choose>
+								<%-- 다 같은자리면 0km 대신 문구 --%>
+								<c:when test="${dayPlan.size > 1 and dayPlan.totalKm < 0.03}"><p>${dayPlan.size}곳 · 모두 <b>같은 위치로 등록된 곳</b>이라 이동이 거의 없어요</c:when>
+								<c:otherwise><p>${dayPlan.size}곳 · ${dayPlan.hasRoad ? '길 따라 총' : '총 직선거리'} <b><fmt:formatNumber value="${dayPlan.hasRoad ? dayPlan.road.km : dayPlan.totalKm}" minFractionDigits="1" maxFractionDigits="1"/>km</b> <span class="sub-inline">${dayPlan.hasRoad ? '· 이동 시간은 오픈스트리트맵 길 찾기 기준' : '· 이동 시간은 직선거리로 어림'}</span></c:otherwise>
+							</c:choose>
 								<c:if test="${not empty dayPlan.note}"><br><span class="note"><c:out value="${dayPlan.note}"/></span></c:if></p>
+							<%-- 담기전 운영시간 확인할 번호 --%>
+							<c:set var="hoursNos" value=""/>
+							<c:forEach items="${dayPlan.blocks}" var="hb"><c:if test="${hb.hoursCheck}"><c:set var="hoursNos" value="${hoursNos}${empty hoursNos ? '' : ' · '}${hb.no}"/></c:if></c:forEach>
+							<c:if test="${not empty hoursNos}"><p class="note hours-note"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span>${hoursNos}번은 저녁 칸이라 <b>운영시간 확인이 필요해요</b>. 담기 전에 상세에서 이용시간을 봐 주세요.</span></p></c:if>
 							<%-- 통째로 담기: 서버가 각 번호를 다시 확인해서 담는다 --%>
 							<form method="post" action="course" class="course-add-plan">
 								<input type="hidden" name="csrf" value="${csrfToken}">
@@ -373,9 +383,12 @@
 						</c:url>
 						<div class="best-call gk-${fn:escapeXml(bestDay.score.gradeKey)}">
 							<div class="bc-text">
-								<p>가장 좋은 날은 <b>${fn:replace(fn:escapeXml(bestDay.dayName), '일뒤', '일 뒤')} ${fn:escapeXml(bestDay.dateLabel)}</b>
-									<span class="bc-score">${bestDay.score.score}점 · ${fn:escapeXml(bestDay.score.grade)}</span></p>
-								<p class="note">비교에 쓴 근거는 <c:out value="${bestDay.compareBasis}"/>이에요. 비교 점수 ${bestDay.compareScore}점<c:if test="${bestDay.uncertain}"> · 이날은 신뢰도가 낮아요(<c:out value="${bestDay.uncertainNote}"/>)</c:if></p>
+								<%-- 추천일은 비교점수 기준 --%>
+								<c:set var="selDs" value="${null}"/>
+								<c:forEach items="${dayStrip}" var="sd"><c:if test="${sd.selected}"><c:set var="selDs" value="${sd}"/></c:if></c:forEach>
+								<p>같은 자료로 비교한 추천일은 <b>${fn:replace(fn:escapeXml(bestDay.dayName), '일뒤', '일 뒤')} ${fn:escapeXml(bestDay.dateLabel)}</b>
+									<span class="bc-score">비교 점수 ${bestDay.compareScore}점</span></p>
+								<p class="note">비교 점수는 모든 날에 있는 자료(<c:out value="${bestDay.compareBasis}"/>)만으로 매긴 점수예요. 그날 하루 여행 지수는 ${bestDay.score.score}점(${fn:escapeXml(bestDay.score.grade)})이에요.<c:if test="${not empty selDs and not selDs.best and selDs.compareScore >= 0}"> 지금 보는 날은 비교 점수 ${selDs.compareScore}점<c:if test="${selDs.hasScore}"> · 여행 지수 ${selDs.score.score}점</c:if>이에요.</c:if><c:if test="${bestDay.uncertain}"> 추천일은 일부 자료가 없어요(<c:out value="${bestDay.uncertainNote}"/>).</c:if></p>
 							</div>
 							<c:choose>
 								<c:when test="${bestDay.selected}"><span class="bc-here">지금 보는 날이에요</span></c:when>
@@ -384,7 +397,7 @@
 						</div>
 					</c:when>
 					<c:otherwise>
-						<div class="state soft"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg><div><p>날씨 자료가 있는 날이 없어서 가장 좋은 날을 고르지 못했어요.</p></div></div>
+						<div class="state soft"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg><div><p>날씨 자료가 있는 날이 없어서 추천일을 고르지 못했어요.</p></div></div>
 					</c:otherwise>
 				</c:choose>
 				<c:set var="prevSrc" value=""/>
@@ -399,7 +412,7 @@
 						</c:url>
 						<li class="ds ${d.selected ? 'on' : ''} ${d.best ? 'best' : ''} ${d.source == 'MID' and prevSrc != 'MID' ? 'seam' : ''} gk-${d.hasScore ? fn:escapeXml(d.score.gradeKey) : 'none'}">
 							<a href="${fn:escapeXml(dsHref)}" ${d.selected ? 'aria-current="page"' : ''}>
-								<c:if test="${d.best}"><span class="ds-best">가장 좋은 날</span></c:if>
+								<c:if test="${d.best}"><span class="ds-best">추천일</span></c:if>
 								<span class="ds-day">${fn:replace(fn:escapeXml(d.dayName), '일뒤', '일 뒤')}</span>
 								<span class="ds-date">${fn:escapeXml(d.dateLabel)}</span>
 								<c:choose>
@@ -418,10 +431,10 @@
 						<c:set var="prevSrc" value="${d.source}"/>
 					</c:forEach>
 				</ol>
-				<p class="note unc-legend"><span class="ds-unc"><span class="sr-only">불확실</span></span> 표시가 붙은 날은 미세먼지 · 자외선 · 특보 예보가 아직 없어서 점수를 90점까지만 매겨요.</p>
+				<p class="note unc-legend"><span class="ds-unc"><span class="sr-only">불확실</span></span> <b>일부 자료 없음</b> — 미세먼지 · 자외선 · 특보 예보가 아직 없는 날이에요. 그래서 여행 지수를 90점까지만 매겨요.</p>
 				<details class="how">
 					<summary>점수를 비교하는 방법</summary>
-					<p>「가장 좋은 날」은 모든 날에 있는 근거(보통 날씨 · 붐빔)만으로 비교해요. 근거가 적은 먼 날이 더 유리해지지 않게 하려는 거예요. 미세먼지 예보는 모레까지, 자외선은 글피까지, 특보는 모레까지만 있어요.</p>
+					<p>추천일은 모든 날에 있는 근거(보통 날씨 · 붐빔)만으로 매긴 비교 점수로 골라요. 칸에 적힌 숫자는 그날 자료를 다 넣은 하루 여행 지수라서, 점수가 더 높은 날이 추천일이 아닐 수 있어요. 근거가 적은 먼 날이 더 유리해지지 않게 하려는 거예요. 미세먼지 예보는 모레까지, 자외선은 글피까지, 특보는 모레까지만 있어요.</p>
 				</details>
 				<c:if test="${not empty midTaCity and not fn:contains(regionName, midTaCity)}"><p class="note">4일 뒤부터의 최저 · 최고기온은 ${fn:escapeXml(midTaCity)} 기준 예보예요. 고른 곳과 몇 도 다를 수 있어요.</p></c:if>
 				<c:if test="${not empty tenMidError}"><p class="note">중기예보: <c:out value="${tenMidError}"/></p></c:if>
