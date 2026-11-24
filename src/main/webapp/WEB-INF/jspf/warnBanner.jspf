@@ -5,9 +5,16 @@
      발효 중인 특보가 있을 때만 role="alert"(읽어 주기), 예비특보 · 다른 지역 소식만 있으면 차분한 role="status".
      모레부터(${warnFar})는 「지금 발효 중인 특보」일 뿐 고른 날 특보는 아직 모르므로 빨간 경고 대신 차분한 안내로 보인다(점수 칩과 같은 말).
      쓰는 쪽에서 ${warnCurrent} · ${warnPrelim} · ${warnElsewhere} · ${warnIssued} · ${warnFar} 를 정해 둔다 --%>
-<c:if test="${not empty warnCurrent or not empty warnPrelim or warnElsewhere > 0}">
+<%-- 다른 지역 특보만 있으면 접힌 한줄로 --%>
+<c:if test="${empty warnCurrent and empty warnPrelim and warnElsewhere > 0}">
+	<details class="warn-else" role="status">
+		<summary><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>같은 시·도 다른 지역 특보 ${warnElsewhere}건</summary>
+		<p>고른 시·군·구에는 해당하지 않아요.<c:if test="${not empty warnIssued}"> 기상청 ${fn:escapeXml(warnIssued)} 발표</c:if></p>
+	</details>
+</c:if>
+<c:if test="${not empty warnCurrent or not empty warnPrelim}">
 	<c:set var="alertNow" value="${not empty warnCurrent and not warnFar}"/>
-	<section class="warnbar ${alertNow ? 'now' : (not empty warnCurrent or not empty warnPrelim ? 'pre' : 'soft')}" role="${alertNow ? 'alert' : 'status'}" aria-label="기상특보">
+	<section class="warnbar ${alertNow ? 'now' : 'pre'}" role="${alertNow ? 'alert' : 'status'}" aria-label="기상특보">
 		<svg class="ic warn-ic" aria-hidden="true"><use href="${alertNow ? '#i-warn' : '#i-info'}"/></svg>
 		<div class="warn-body">
 			<c:if test="${not empty warnCurrent and not warnFar}">
@@ -28,9 +35,6 @@
 					<c:forEach items="${warnPrelim}" var="w"><li class="warn-item"><c:out value="${w.text}"/><c:if test="${not empty w.when}"> · <c:out value="${w.when}"/></c:if></li></c:forEach>
 				</ul>
 			</c:if>
-			<c:if test="${empty warnCurrent and empty warnPrelim and warnElsewhere > 0}">
-				<p class="warn-pre">같은 시·도의 다른 지역에 특보가 ${warnElsewhere}건 있어요. 고른 시·군·구에는 해당하지 않아요.</p>
-			</c:if>
 			<c:if test="${not empty warnCurrent or not empty warnPrelim}">
 				<details class="warn-more">
 					<summary>자세히</summary>
@@ -40,7 +44,6 @@
 					<c:if test="${not empty warnIssued}"><p class="warn-src">기상청 ${fn:escapeXml(warnIssued)} 발표</p></c:if>
 				</details>
 			</c:if>
-			<c:if test="${empty warnCurrent and empty warnPrelim and not empty warnIssued}"><p class="warn-src">기상청 ${fn:escapeXml(warnIssued)} 발표</p></c:if>
 		</div>
 	</section>
 </c:if>

@@ -98,6 +98,11 @@ public class TourVO {
 	public WeatherVO getWeather() { return weather; }
 	public void setWeather(WeatherVO weather) { this.weather = weather; }
 	public boolean isWeatherApprox() { return weatherApprox; }
+	// 카드 날씨 비교용 (날씨 없으면 빈칸)
+	public String getWxKey() {
+		if (weather == null) return "";
+		return weather.getIcon() + "|" + weather.getMinTemp() + "|" + weather.getMaxTemp() + "|" + weather.getMaxPop() + "|" + weatherApprox;
+	}
 	public void setWeatherApprox(boolean weatherApprox) { this.weatherApprox = weatherApprox; }
 	public String getRecMode() { return recMode; }
 	public void setRecMode(String recMode) { this.recMode = recMode; }

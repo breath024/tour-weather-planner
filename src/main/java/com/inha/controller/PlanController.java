@@ -447,6 +447,7 @@ public class PlanController extends HttpServlet {
 				request.setAttribute("rec", rec);
 				request.setAttribute("recommended", recommended);
 				request.setAttribute("others", others);
+				commonWeather(request, recommended, others); // 카드마다 같은 날씨 반복 안 하게
 				request.setAttribute("dayPlan", dayPlan);
 				// 마커는 거른 목록, 코스 경로는 전체 기준. 시간 슬라이더 자료("time")는 마커에 붙은 격자 날씨를 그대로 옮긴다(추가 호출 없음)
 				request.setAttribute("mapJson", MapJson.plan(shownSpots, dayPlan, center, day, area, sigungu, events, selCat, dayFc, nowKst().getHour()));
@@ -460,5 +461,29 @@ public class PlanController extends HttpServlet {
 			e.printStackTrace();
 			request.setAttribute("error", "처리 중 오류가 났어요. 잠시 뒤 다시 시도해 주세요.");
 		}
+	}
+
+	// 절반 넘는 곳 날씨가 같으면 그 날씨를 목록 위에 한번만 (카드엔 다른 곳만)
+	static void commonWeather(HttpServletRequest request, List<TourVO> a, List<TourVO> b) {
+		Map<String, Integer> cnt = new java.util.HashMap<>();
+		Map<String, TourVO> ref = new java.util.HashMap<>();
+		int n = 0;
+		for (List<TourVO> list : List.of(a, b)) {
+			for (TourVO v : list) {
+				String k = v.getWxKey();
+				if (k.isEmpty()) continue;
+				n++;
+				cnt.merge(k, 1, Integer::sum);
+				ref.putIfAbsent(k, v);
+			}
+		}
+		String best = null;
+		for (Map.Entry<String, Integer> e : cnt.entrySet()) {
+			if (best == null || e.getValue() > cnt.get(best)) best = e.getKey();
+		}
+		if (best == null || n < 2 || cnt.get(best) * 2 <= n) return;
+		request.setAttribute("wxCommonKey", best);
+		request.setAttribute("wxCommonSpot", ref.get(best));
+		request.setAttribute("wxAllSame", cnt.get(best) == n);
 	}
 }

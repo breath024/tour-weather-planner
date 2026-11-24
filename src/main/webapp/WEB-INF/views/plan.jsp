@@ -138,6 +138,15 @@
 		<c:if test="${empty heroImg and not empty x.image}"><c:set var="heroImg" value="${x.image}"/><c:set var="heroName" value="${x.title}"/></c:if>
 	</c:forEach>
 
+	<%-- 날씨 같은곳은 카드에서 뺌 (컨트롤러가 wxCommonKey 정함) --%>
+	<c:set var="wxRef" value="${wxCommonSpot}"/>
+
+	<%-- 나머지 목록 이름: 다 실내면 실내 대안 --%>
+	<c:set var="othIn" value="${0}"/>
+	<c:forEach items="${others}" var="x"><c:if test="${x.indoor}"><c:set var="othIn" value="${othIn + 1}"/></c:if></c:forEach>
+	<c:set var="othKind" value="${empty recommended ? 'all' : (othIn == fn:length(others) ? 'in' : (othIn == 0 ? 'out' : 'mix'))}"/>
+	<c:set var="othLabel" value="${othKind == 'all' ? '관광지' : (othKind == 'in' ? '실내 대안' : (othKind == 'out' ? '실외 관광지' : '그 밖의 관광지'))}"/>
+
 	<%-- 기상특보 배너: 고른 시·도에 발효 중인 특보가 있을 때만 맨 위에 나온다 --%>
 	<div class="wrap warn-wrap"><%@ include file="/WEB-INF/jspf/warnBanner.jspf" %></div>
 
@@ -146,9 +155,13 @@
 		<div class="rhero-shade"></div>
 		<div class="wrap rhero-in">
 			<div class="rhero-head">
-				<p class="crumb"><a href="plan">${keywordSearch ? '검색' : '지역 플래너'}</a></p>
+				<div class="rhero-ttl">
+					<p class="crumb"><a href="plan">${keywordSearch ? '검색' : '지역 플래너'}</a></p>
 					<h1><c:choose><c:when test="${keywordSearch}">'<c:out value="${keyword}"/>' 검색 결과</c:when><c:otherwise><c:out value="${regionName}"/></c:otherwise></c:choose></h1>
 					<p class="rhero-date"><c:if test="${keywordSearch and regionName != '전국'}"><c:out value="${regionName}"/> · </c:if><c:if test="${not empty weather}">${fn:escapeXml(weather.dateLabel)} · </c:if>관광지 ${total}곳<c:if test="${not empty centerNote}"> · <c:out value="${centerNote}"/></c:if></p>
+				</div>
+				<%-- 추천동선 바로가기 --%>
+				<c:if test="${not empty dayPlan and dayPlan.available}"><a class="rhero-go" href="#dayPlan">추천 동선 보기<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a></c:if>
 			</div>
 
 			<c:choose>
@@ -221,7 +234,7 @@
 				<c:if test="${not empty festivals}"><a href="#festivals">축제 · 행사</a></c:if>
 				<a class="js-only" href="#mapSec">날씨 지도</a>
 				<c:if test="${not empty recommended}"><a href="#recommended">추천 관광지</a></c:if>
-				<c:if test="${not empty others}"><a href="#others">${empty recommended ? '관광지' : '그 밖의 관광지'}</a></c:if>
+				<c:if test="${not empty others}"><a href="#others">${othLabel}</a></c:if>
 			</nav>
 		</div>
 	</div>
@@ -565,6 +578,8 @@
 						<c:when test="${noMatch}"><p>조건에 맞는 곳이 없어서 전체 목록이에요.</p></c:when>
 							<c:otherwise><p>각 관광지 자리의 날씨에 맞는 곳이에요.<c:if test="${recTipSame and not empty recommended[0].tip}"> <c:out value="${recommended[0].tip}"/></c:if></p></c:otherwise>
 					</c:choose>
+					<%-- 날씨 다 같으면 여기 한번만 --%>
+					<c:if test="${not empty wxRef}"><p class="note wx-same"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(wxRef.weather.icon)}"/></svg><span>관광지 날씨는 ${wxAllSame ? '모두' : '대부분'} ${fn:escapeXml(wxRef.weather.sky)} · <tw:trange lo="${wxRef.weather.minTemp}" hi="${wxRef.weather.maxTemp}" merge="true"/> · 강수확률 ${wxRef.weather.maxPop}%<c:if test="${wxRef.weatherApprox}">(대략)</c:if>예요. ${wxAllSame ? '카드에는 뺐어요.' : '카드에는 날씨가 다른 곳만 적었어요.'}</span></p></c:if>
 				</div>
 				<div class="grid">
 					<c:forEach items="${recommended}" var="s">
@@ -583,8 +598,8 @@
 				<c:forEach items="${others}" var="x"><c:if test="${x.tip != others[0].tip}"><c:set var="othTipSame" value="${false}"/></c:if></c:forEach>
 				<section class="block" id="others" aria-labelledby="othTitle" data-cat-sec>
 				<div class="block-head">
-					<h2 id="othTitle">${empty recommended ? '관광지' : '그 밖의 관광지'} <small data-count>${fn:length(others)}곳</small></h2>
-					<c:if test="${not empty recommended or (othTipSame and not empty others[0].tip)}"><p><c:if test="${not empty recommended}">그 자리 날씨에는 덜 맞지만 둘러볼 만해요.</c:if><c:if test="${othTipSame and not empty others[0].tip}"> <c:out value="${others[0].tip}"/></c:if></p></c:if>
+					<h2 id="othTitle">${othLabel} <small data-count>${fn:length(others)}곳</small></h2>
+					<c:if test="${not empty recommended or (othTipSame and not empty others[0].tip)}"><p><c:choose><c:when test="${othKind == 'in'}">날씨가 바뀌거나 쉬어 가고 싶을 때 들를 실내예요.</c:when><c:when test="${othKind == 'out'}">그 자리 날씨에는 덜 맞는 실외예요. 날이 좋은 날 가 보세요.</c:when><c:when test="${othKind == 'mix'}">그 자리 날씨에는 덜 맞지만 둘러볼 만해요.</c:when></c:choose><c:if test="${othTipSame and not empty others[0].tip}"> <c:out value="${others[0].tip}"/></c:if></p></c:if>
 				</div>
 				<div class="grid">
 					<c:forEach items="${others}" var="s">

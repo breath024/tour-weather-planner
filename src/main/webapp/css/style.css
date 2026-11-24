@@ -224,6 +224,11 @@ form.course-add { margin: 0; }
 .warn-ic { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--bad-ink); }
 .warnbar.pre .warn-ic { color: var(--warn-ink); }
 .warnbar.soft .warn-ic { color: var(--blue); }
+/* 다른 지역 특보만 있을때 접힌 한줄 */
+.warn-else { margin: var(--s2) 0; font-size: var(--fs-2); color: var(--sub); }
+.warn-else > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.warn-else > summary .ic { width: 16px; height: 16px; color: var(--blue); }
+.warn-else > p { margin: 0 0 var(--s1) 22px; }
 .warn-body { min-width: 0; flex: 1; }
 .warn-body > * + * { margin-top: 6px; }
 .warn-now { font-size: var(--fs-4); }
@@ -529,7 +534,12 @@ p, .addr, .note, .spread { text-wrap: pretty; }
 .rhero, .dhero { position: relative; background: var(--hero); color: #fff; overflow: clip; isolation: isolate; }
 .rhero-img, .dhero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
 .rhero-shade { position: absolute; inset: 0; z-index: -1; background: rgba(15, 26, 54, .68); }   /* 사진 위 글자가 읽히게 하는 옅은 덮개 */
-.rhero-in { padding-top: var(--s5); padding-bottom: var(--s5); min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s5); }
+.rhero-in { padding-top: var(--s4); padding-bottom: var(--s4); min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s3); }
+/* 제목 옆 추천동선 바로가기 */
+.rhero-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s3) var(--s4); }
+.rhero-go { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 var(--s4); border-radius: var(--r2); border: 1px solid rgba(255, 255, 255, .55); background: rgba(255, 255, 255, .14); color: #fff; font-size: var(--fs-3); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.rhero-go:hover { background: rgba(255, 255, 255, .24); }
+.rhero-go .ic { width: 16px; height: 16px; }
 .crumb { font-size: var(--fs-2); color: #dfe6f6; }
 /* 누르는 자리는 위아래로 넓히되, 밑줄은 글자에 붙인다 (테두리로 그리면 넓힌 자리 끝 = 제목 바로 위에 선이 뜬다) */
 .crumb a { display: inline-block; padding: 12px 0; margin: -12px 0; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .45); text-underline-offset: 3px; }
@@ -570,7 +580,13 @@ p, .addr, .note, .spread { text-wrap: pretty; }
 .hour .p { position: relative; display: block; width: 6px; height: 26px; border-radius: 3px; background: rgba(255, 255, 255, .2); overflow: hidden; margin-top: 2px; }
 .hour .p i { position: absolute; left: 0; right: 0; bottom: 0; background: #9cc0ff; }
 .hour .pp { font-size: var(--fs-1); opacity: .9; }
+/* hero 안 시간 띠는 낮게 (막대 빼고 숫자만) */
+.rhero .hour { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 3px; padding: 6px 2px; }
+.rhero .hour .t, .rhero .hour .pp { flex: 1 1 100%; text-align: center; }
+.rhero .hour .i { font-size: 18px; line-height: 1; }
+.rhero .hour .p { display: none; }
 @media (max-width: 560px) { .hours { grid-auto-columns: minmax(46px, 88px); gap: 5px; } }
+@media (max-width: 560px) { .rhero .hours { grid-auto-columns: minmax(54px, 88px); } } /* 아이콘+기온 한줄 들어가게 */
 /* 좁은 폭: hero 를 낮춰서 결론(여행 지수)이 첫 화면에 들어오게 */
 @media (max-width: 680px) {
 	.rhero-in { padding-top: var(--s4); padding-bottom: var(--s4); gap: var(--s3); }
@@ -808,6 +824,10 @@ p, .addr, .note, .spread { text-wrap: pretty; }
 .scard .wxchip .ic { width: 20px; height: 20px; }
 .scard .sbadge b { font-size: var(--fs-4); }
 .scard .tip { margin-top: var(--s2); }
+/* 이름 바로 밑 추천이유 */
+.scard h3 + .tip { margin-top: var(--s1); padding-top: 0; border-top: 0; color: var(--ink); font-weight: 600; }
+.block-head .wx-same { display: flex; align-items: center; gap: 6px; }
+.block-head .wx-same .ic { width: 18px; height: 18px; flex: 0 0 auto; }
 @media (max-width: 520px) {
 	/* 좁은 폭: 왼쪽 사진 · 오른쪽 글자의 가로 카드로 목록을 짧게 */
 	.grid { grid-template-columns: minmax(0, 1fr); gap: var(--s3); }

@@ -3,7 +3,7 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="tw" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<%-- 관광지 카드 한 장. 쓰는 쪽에서 ${s}(TourVO) · ${nextUrl} · ${cardDim}(흐리게, 선택) · ${hideTip}(같은 팁 줄 숨김, 선택) · ${hideScore}(점수 줄 숨김, 선택)을 정해 둔다 --%>
+<%-- 관광지 카드 한 장. 쓰는 쪽에서 ${s}(TourVO) · ${nextUrl} · ${cardDim}(흐리게, 선택) · ${hideTip}(같은 팁 줄 숨김, 선택) · ${hideScore}(점수 줄 숨김, 선택) · ${wxCommonKey}(이 날씨면 칩 숨김, 선택)을 정해 둔다 --%>
 <c:url var="detailHref" value="detail">
 	<c:param name="id" value="${s.contentId}"/>
 	<c:param name="type" value="${s.contentTypeId}"/>
@@ -20,15 +20,16 @@
 		<div class="scard-body">
 			<p class="meta"><span class="badge ${s.indoor ? 'in' : 'out'}">${s.indoor ? '실내' : '실외'}</span>${fn:escapeXml(s.typeName)}<c:if test="${not empty s.lclsName}"> · ${fn:escapeXml(s.lclsName)}</c:if><c:if test="${s.distKm > 0}"> · <fmt:formatNumber value="${s.distKm}" minFractionDigits="1" maxFractionDigits="1"/>km</c:if></p>
 			<h3><c:out value="${s.title}"/></h3>
+			<%-- 추천이유 먼저 --%>
+			<c:if test="${not hideTip and not empty s.tip}"><p class="tip"><c:out value="${s.tip}"/></p></c:if>
 			<p class="addr">${fn:replace(fn:replace(fn:escapeXml(s.addr), '~', '&#8288;~&#8288;'), '-', '-&#8288;')}</p>
-			<c:if test="${not empty s.weather or not empty s.crowdText or (not empty s.score and s.score.available and not hideScore and (s.score.uncertain or empty regionScore or s.score.score != regionScore.score))}">
+			<c:if test="${(not empty s.weather and s.wxKey != wxCommonKey) or not empty s.crowdText or (not empty s.score and s.score.available and not hideScore and (s.score.uncertain or empty regionScore or s.score.score != regionScore.score))}">
 				<p class="sc-line">
-					<c:if test="${not empty s.weather}"><span class="wxchip" title="이 관광지 좌표 기준 날씨"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(s.weather.icon)}"/></svg><span class="sr-only">${fn:escapeXml(s.weather.sky)} </span><span><tw:trange lo="${s.weather.minTemp}" hi="${s.weather.maxTemp}" merge="true"/> · ${s.weather.maxPop}%<c:if test="${s.weatherApprox}"> <em>대략</em></c:if></span></span></c:if>
+					<c:if test="${not empty s.weather and s.wxKey != wxCommonKey}"><span class="wxchip" title="이 관광지 좌표 기준 날씨"><svg class="ic" aria-hidden="true"><use href="#w-${fn:escapeXml(s.weather.icon)}"/></svg><span class="sr-only">${fn:escapeXml(s.weather.sky)} </span><span><tw:trange lo="${s.weather.minTemp}" hi="${s.weather.maxTemp}" merge="true"/> · ${s.weather.maxPop}%<c:if test="${s.weatherApprox}"> <em>대략</em></c:if></span></span></c:if>
 					<c:if test="${not empty s.crowdText}"><span class="crowdchip" title="관광공사 집중률 예측(이 관광지 이름과 맞아요)"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>${fn:escapeXml(s.crowdText)}</span></c:if>
 					<c:if test="${not empty s.score and s.score.available and not hideScore and (s.score.uncertain or empty regionScore or s.score.score != regionScore.score)}"><span class="sbadge gk-${fn:escapeXml(s.score.gradeKey)} ${s.score.uncertain ? 'unc' : ''}" title="${s.score.uncertain ? '불확실: ' : ''}${fn:escapeXml(s.score.uncertain ? s.score.uncertainNote : '여행 지수: 날씨 · 미세먼지 · 자외선 · 붐빔 · 특보')}"><span class="sr-only">여행 지수 </span><b>${s.score.score}</b><i>${fn:escapeXml(s.score.grade)}</i><c:if test="${s.score.uncertain}"><em class="sb-unc"><span class="sr-only">불확실 (신뢰도 낮음, ${fn:escapeXml(s.score.uncertainNote)})</span></em></c:if></span></c:if>
 				</p>
 			</c:if>
-			<c:if test="${not hideTip and not empty s.tip}"><p class="tip"><c:out value="${s.tip}"/></p></c:if>
 		</div>
 	</a>
 	<div class="scard-act"><%@ include file="/WEB-INF/jspf/courseAdd.jspf" %></div>
