@@ -3,7 +3,7 @@
 ## 다음에 해야 할 것
 - **실행 zip 나눠 주기**
   - 드라이브엔 올라간 적이 없다(11/22 드라이브 검색 0건). 지금은 아는 사람에게 카톡 파일로 직접 보낸다.
-  - 보낼 파일은 `build/bundle/TourWeather-windows-key.zip`(11/20 14시 판 · 실제 길까지 든 판 · 48MB).
+  - 보낼 파일은 `build/bundle/TourWeather-windows-key.zip`(11/24 16시 판 · 운영시간 확인 · 추천일 · 같은 위치 표시까지 · 48MB).
   - 키 든 zip 이나 그 링크는 README 같은 공개된 곳에 쓰지 않는다. 받은 사람이 많이 돌리면 하루 호출 수(TourAPI 1,000회)를 같이 쓴다.
   - 코드를 고치면 `tools/bundle/build_bundle.sh --with-key` 로 다시 만든 뒤 보낸다.
 - **(선택) 날씨 지도 이름표 접힘**
