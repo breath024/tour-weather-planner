@@ -9,15 +9,16 @@ import java.util.Set;
 //
 // 계산 규칙 (발표 때 이대로 설명하면 된다)
 //  1) 100점에서 시작해 근거마다 깎는다. 근거마다 최대로 깎이는 점수(가중치)가 정해져 있다.
-//       날씨(비 · 눈 · 기온 · 하늘)  최대 -45   ← 여행에서 가장 큰 변수
-//       미세먼지(예보/실시간 등급)   최대 -20
+//       날씨(비 · 눈 · 기온 · 하늘)  최대 -60   ← 여행에서 가장 큰 변수
+//       미세먼지(예보/실시간 등급)   최대 -42
 //       붐빔(집중률)                 최대 -15
-//       자외선(지수 단계)            최대 -8
+//       자외선(지수 단계)            최대 -12
 //  2) 기상특보는 깎는 게 아니라 "점수 상한"을 낮춘다: 큰 경보(호우 · 태풍 · 폭염 · 한파 · 대설) 30점,
 //     그 밖의 경보 45점, 주의보 70점, 예비특보 85점. 실내 관광지는 상한을 15점 올려 준다.
 //  3) 실내 관광지는 날씨 영향이 작아서 날씨 감점을 30%만, 미세먼지는 40%만 깎고 자외선은 안 깎는다.
 //  4) 자료가 없는 근거는 깎지 않고 칩을 회색 "자료 없음"으로 보여 준다 → 남은 근거로만 계산한다 (ScoreVO.missing 에 빠진 개수).
 //     (다만 6번: 다른 날에는 있는 근거가 빠진 날은 그냥 두지 않고 불확실로 표시한다.)
+//     근거 5개 중 3개 이상이 없으면(날씨만 있는 날 등) 점수는 90점까지만 주고, 노트에 그렇게 적는다.
 //  5) 등급: 85점 이상 최고 · 70 이상 좋음 · 50 이상 보통 · 그 아래 비추.
 //  6) 불확실: 이 지역의 다른 날에는 값이 있는 근거(미세먼지 · 자외선 · 붐빔 · 특보)가 이 날은 없으면
 //     「불확실 · 신뢰도 낮음」으로 표시하고 점수는 90점까지만 준다 (감점이 빠진 날이 100점 「최고」로 보이지 않게).
@@ -27,22 +28,26 @@ import java.util.Set;
 public class TravelScore {
 
 	// 근거별 최대 감점
-	static final int MAX_WEATHER = 45;
-	static final int MAX_DUST = 20;
+	static final int MAX_WEATHER = 60;
+	static final int MAX_DUST = 42;
 	static final int MAX_CROWD = 15;
-	static final int MAX_UV = 8;
+	static final int MAX_UV = 12;
 	// 특보별 점수 상한
 	static final int CAP_MAJOR = 30;
 	static final int CAP_WARNING = 45;
 	static final int CAP_ADVISORY = 70;
 	static final int CAP_PRELIM = 85;
 	static final int INDOOR_CAP_BONUS = 15;
+	// 「실외 위주」 추천을 낼 수 있는 날씨 감점 상한 (먼지 · 자외선 · 붐빔이 보통 수준이어도 70점 이상이 되게 18)
+	public static final int OUTDOOR_MAX_PENALTY = 18;
 	// 등급 경계
 	static final int BEST = 85;
 	static final int GOOD = 70;
 	static final int OK = 50;
 	// 다른 날에는 있던 근거가 빠진 날의 점수 상한 (자료가 모자란 날이 「최고 100점」으로 보이지 않게)
 	static final int UNCERTAIN_CAP = 90;
+	// 근거 5개 중 이만큼 이상 자료가 없으면 점수 상한 (날씨만 보고 「최고」를 주지 않는다)
+	static final int SPARSE_MISSING = 3;
 
 	// 한 곳 · 한 날의 점수.
 	//  ev: 그 지역의 새 API 자료 묶음 (null 이면 새 근거는 모두 "자료 없음")
@@ -94,6 +99,9 @@ public class TravelScore {
 		int raw = Math.max(0, 100 - deduct);
 		int score = Math.min(raw, cap);
 		s.setRawScore(score);
+		boolean sparse = missing >= SPARSE_MISSING;
+		boolean sparseCut = sparse && score > UNCERTAIN_CAP; // 자료가 모자라서 실제로 깎였나
+		if (sparse) score = Math.min(score, UNCERTAIN_CAP);
 		// 불확실: 이 지역에서 다른 날에는 값이 있는 근거가 이 날은 빠졌나
 		List<String> lacking = lackingLabels(ev, chips);
 		if (!lacking.isEmpty()) {
@@ -110,6 +118,7 @@ public class TravelScore {
 		if (missing > 0) {
 			note.append("근거 ").append(chips.size()).append("개 중 ").append(chips.size() - missing).append("개로 계산했어요.");
 			if (w == null) note.append(" 날씨 자료가 없어서 정확도가 낮아요.");
+			if (sparseCut) note.append(" 자료가 모자라 ").append(UNCERTAIN_CAP).append("점까지만 줘요.");
 		}
 		if (s.isUncertain()) {
 			note.append(" 다른 날에는 있는 ").append(String.join(" · ", lacking)).append(" 자료가 이날은 아직 없어서 신뢰도가 낮아요(점수는 ")
@@ -167,37 +176,81 @@ public class TravelScore {
 	}
 
 	// ---- ① 날씨 ----
-	// 비 · 눈 예보(또는 강수확률 60% 이상) -35, 강수확률 30~59% -10 / 최고 33° 이상 -15, 30° 이상 -6, 0° 이하 -15, 5° 이하 -6
-	// 비가 없으면 하늘: 흐림 -4, 구름많음 -1. 합이 45점을 넘지 않게 자른다.
+	// 비 · 눈 예보(또는 강수확률 60% 이상) -56, 강수확률 50% -30, 40% -20, 30% -12, 20% -3
+	// 최고기온: 쾌적 17~26° 는 0. 아래 점을 직선으로 이어서 1° 마다 조금씩 변한다 (계단 없음)
+	//          추위 14° -12, 10° -20, 5° -30, 0° -46, -5° 이하 -60 / 더위 30° -16, 33° -36, 36° -48, 40° 이상 -60
+	// 최저기온: 6° 이상 0, 0° -3, -5° -5, -10° 이하 -8 (직선으로 이음)
+	// 비가 없으면 하늘: 흐림 -6, 구름많음 -3. 합이 60점을 넘지 않게 자른다. 실내는 30%만.
 	private static ChipVO weatherChip(WeatherVO w, boolean indoor) {
 		if (w == null) return new ChipVO("weather", "날씨", "자료 없음", ChipVO.NONE, 0, "이날 날씨 예보를 못 구했어요.");
-		int p = 0;
-		if (w.isRainy()) p += 35;
-		else if (w.getMaxPop() >= 30) p += 10;
-		int max = w.getMaxTemp() == null ? 15 : w.getMaxTemp();
-		if (max >= 33) p += 15;
-		else if (max >= 30) p += 6;
-		else if (max <= 0) p += 15;
-		else if (max <= 5) p += 6;
-		if (!w.isRainy()) {
-			if ("흐림".equals(w.getSky())) p += 4;
-			else if ("구름많음".equals(w.getSky())) p += 1;
-		}
-		p = Math.min(p, MAX_WEATHER);
+		int p = weatherPenalty(w);
 		if (indoor) p = Math.round(p * 0.3f); // 실내는 날씨 영향이 작다
 		String text = w.getSky() + " · " + w.getTempRange() + " · 강수확률 " + w.getMaxPop() + "%";
-		String hint = indoor ? "실내 관광지라 날씨 감점을 30%만 반영했어요." : "비 · 기온 · 하늘을 보고 최대 45점까지 깎아요.";
+		String hint = indoor ? "실내 관광지라 날씨 감점을 30%만 반영했어요." : "비 · 기온 · 하늘을 보고 최대 60점까지 깎아요.";
+		if (w.isMaxFromHours()) hint += " 오늘은 남은 시간의 기온 기준이에요.";
 		return new ChipVO("weather", "날씨", text, levelOf(-p), -p, hint);
 	}
 
+	// 날씨 감점(실외 기준, 0~60). 추천 방향(Recommender)도 이 값을 쓴다
+	public static int weatherPenalty(WeatherVO w) {
+		int p = 0;
+		if (w.isRainy()) p += 56;
+		else p += popPenalty(w.getMaxPop());
+		int max = w.getMaxTemp() == null ? 20 : w.getMaxTemp();
+		p += maxTempPenalty(max);
+		if (w.getMinTemp() != null) p += minTempPenalty(w.getMinTemp());
+		if (!w.isRainy()) {
+			if ("흐림".equals(w.getSky())) p += 6;
+			else if ("구름많음".equals(w.getSky())) p += 3;
+		}
+		return Math.min(p, MAX_WEATHER);
+	}
+
+	// 점(기온, 감점)들을 직선으로 이은 값. 양 끝 밖은 끝 값을 그대로 쓴다
+	private static int lerp(int x, int[][] pts) {
+		if (x <= pts[0][0]) return pts[0][1];
+		for (int i = 1; i < pts.length; i++) {
+			if (x <= pts[i][0]) {
+				int x0 = pts[i - 1][0], y0 = pts[i - 1][1], x1 = pts[i][0], y1 = pts[i][1];
+				return (int) Math.round(y0 + (double) (y1 - y0) * (x - x0) / (x1 - x0));
+			}
+		}
+		return pts[pts.length - 1][1];
+	}
+
+	// 최고기온 점 (기온, 감점): 17~26° 는 0
+	private static final int[][] MAX_TEMP_PTS = { { -5, 60 }, { 0, 46 }, { 5, 30 }, { 10, 20 }, { 14, 12 }, { 17, 0 },
+			{ 26, 0 }, { 30, 16 }, { 33, 36 }, { 36, 48 }, { 40, 60 } };
+	// 최저기온 점 (기온, 감점)
+	private static final int[][] MIN_TEMP_PTS = { { -10, 8 }, { -5, 5 }, { 0, 3 }, { 6, 0 } };
+
+	// 강수확률(비 판정 아님) 감점
+	static int popPenalty(int pop) {
+		if (pop >= 50) return 30;
+		if (pop >= 40) return 20;
+		if (pop >= 30) return 12;
+		if (pop >= 20) return 3;
+		return 0;
+	}
+
+	// 최고기온 감점 (쾌적 17~26°). 1° 마다 최대 7점
+	static int maxTempPenalty(int max) {
+		return lerp(max, MAX_TEMP_PTS);
+	}
+
+	// 최저기온 감점 (아침 · 밤이 많이 추우면 조금 더)
+	static int minTempPenalty(int min) {
+		return lerp(min, MIN_TEMP_PTS);
+	}
+
 	// ---- ② 미세먼지 ----
-	// 등급 보통 -3, 나쁨 -12, 매우나쁨 -20 (실내는 40%)
+	// 등급 보통 -5, 나쁨 -22, 매우나쁨 -42 (실내는 40%)
 	private static ChipVO dustChip(RegionEvidence ev, int day, boolean indoor) {
 		RegionEvidence.AirView a = ev == null ? null : ev.airView(day);
 		if (a == null) {
 			return new ChipVO("dust", "미세먼지", "자료 없음", ChipVO.NONE, 0, ev == null ? "미세먼지 자료를 못 구했어요." : ev.airMissingReason(day));
 		}
-		int p = a.getGrade() >= 4 ? MAX_DUST : a.getGrade() == 3 ? 12 : a.getGrade() == 2 ? 3 : 0;
+		int p = a.getGrade() >= 4 ? MAX_DUST : a.getGrade() == 3 ? 22 : a.getGrade() == 2 ? 5 : 0;
 		if (indoor) p = Math.round(p * 0.4f);
 		String text = a.getGradeText() + " (" + a.getSource() + ")";
 		String hint = "PM10 " + a.getPm10Text() + " · PM2.5 " + a.getPm25Text() + (a.getTime().isEmpty() ? "" : " · " + a.getTime());
@@ -205,13 +258,13 @@ public class TravelScore {
 	}
 
 	// ---- ③ 자외선 ----
-	// 단계 높음 -2, 매우높음 -5, 위험 -8 (실내는 깎지 않음)
+	// 단계 높음 -3, 매우높음 -7, 위험 -12 (실내는 깎지 않음)
 	private static ChipVO uvChip(RegionEvidence ev, int day, boolean indoor) {
 		RegionEvidence.UvView u = ev == null ? null : ev.uvView(day);
 		if (u == null) {
 			return new ChipVO("uv", "자외선", "자료 없음", ChipVO.NONE, 0, ev == null ? "자외선 자료를 못 구했어요." : ev.uvMissingReason(day));
 		}
-		int p = u.getLevel() >= 5 ? MAX_UV : u.getLevel() == 4 ? 5 : u.getLevel() == 3 ? 2 : 0;
+		int p = u.getLevel() >= 5 ? MAX_UV : u.getLevel() == 4 ? 7 : u.getLevel() == 3 ? 3 : 0;
 		if (indoor) p = 0;
 		return new ChipVO("uv", "자외선", "지수 " + u.getMax() + " · " + u.getLevelText(), levelOf(-p), -p, u.getAdvice());
 	}

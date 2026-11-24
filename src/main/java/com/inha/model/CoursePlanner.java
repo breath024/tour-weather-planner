@@ -226,12 +226,22 @@ public class CoursePlanner {
 		return blocks;
 	}
 
-	// 중기 칸이 야외에 좋은가: 비 · 눈 하늘, 강수확률 40% 이상, 최고기온 1° 미만 · 32° 초과면 나쁨 (시간별 판정과 같은 기준)
-	private static String midProblemOf(String sky, int pop, Integer maxTemp) {
+	// 중기 칸이 야외에 좋은가: 비 · 눈 하늘, 강수확률 40% 이상, 하루 최고기온 5° 이하 · 32° 초과면 나쁨
+	public static String midProblemOf(String sky, int pop, Integer maxTemp) {
 		if ("비".equals(sky) || "비/눈".equals(sky) || "눈".equals(sky) || "소나기".equals(sky)) return sky;
 		if (pop >= 40) return "강수확률 " + pop + "%";
-		if (maxTemp != null && maxTemp < 1) return "기온 " + maxTemp + "° (추움)";
-		if (maxTemp != null && maxTemp > 32) return "기온 " + maxTemp + "° (더움)";
+		if (maxTemp != null && maxTemp <= Recommender.COLD_MAX) return "기온 " + maxTemp + "° (추움)";
+		return hotProblem(maxTemp);
+	}
+
+	// 시간별 기온만 보고 야외에 나쁜가: 0° 이하 추움, 32° 초과 더움 (아니면 ""). 하루 최고기온 기준과 따로 둔다
+	static String hourTempProblem(Integer t) {
+		if (t != null && t <= Recommender.COLD_HOUR) return "기온 " + t + "° (추움)";
+		return hotProblem(t);
+	}
+
+	private static String hotProblem(Integer t) {
+		if (t != null && t > 32) return "기온 " + t + "° (더움)";
 		return "";
 	}
 
@@ -419,13 +429,15 @@ public class CoursePlanner {
 
 	// 한 시간이 야외 관광에 좋은가: 비 · 눈 없음(PTY=0), 강수확률 40% 미만, 기온 1~32°
 	// 나쁘면 이유 문구, 좋으면 ""
-	private static String problemOf(HourVO h) {
+	public static String problemOf(HourVO h) {
 		if (h.isRainSky()) return h.getSky();
 		if (h.getPop() >= 40) return "강수확률 " + h.getPop() + "%";
-		Integer t = h.getTempValue();
-		if (t != null && t < 1) return "기온 " + t + "° (추움)";
-		if (t != null && t > 32) return "기온 " + t + "° (더움)";
-		return "";
+		return hourTempProblem(h.getTempValue());
+	}
+
+	// 날씨 하루의 한 칸(start 시부터 두 시간)이 야외에 나쁜 이유 (좋으면 ""). 시험대가 쓴다
+	public static String blockProblem(WeatherVO w, int start) {
+		return problemOf(hoursOf(w, start));
 	}
 
 	// 블록 두 시간 중 하나라도 나쁘면 그 이유 (없으면 "")

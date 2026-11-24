@@ -7,6 +7,13 @@ import java.util.List;
 // 융합 판단: 관광지(API ①)와 날씨(API ②)를 엮어서 추천을 정한다
 public class Recommender {
 
+	// 하루 최고기온이 이 값 이하면 쌀쌀한 날 (섞어 추천 · 중기 칸 판정)
+	public static final int COLD_MAX = 5;
+	// 시간별 기온이 이 값 이하면 야외 칸이 추움 (시간 기온은 최고보다 낮아서 하루 기준과 따로 둔다)
+	public static final int COLD_HOUR = 0;
+	// 선선하다고 말하는 최고기온 (이 값 이하이고 날씨 감점이 크면 「선선해요」)
+	private static final int COOL_MAX = 14;
+
 	// 관광지 이름에 이런 말이 있으면 실내로 본다
 	private static final String[] INDOOR_WORDS = { "박물관", "미술관", "기념관", "전시", "과학관", "아쿠아리움",
 			"수족관", "체험관", "갤러리", "실내", "도서관", "공연장", "아트센터", "문화원", "천문대", "홍보관", "영화관" };
@@ -59,6 +66,11 @@ public class Recommender {
 		return (list.get(n / 2 - 1) + list.get(n / 2)) / 2.0;
 	}
 
+	// 실외 위주로 추천해도 되는 날씨인가: 날씨 감점이 18점 이하 (그러면 먼지 · 자외선 · 붐빔이 보통이어도 실외 점수가 70점 이상)
+	static boolean outdoorOk(WeatherVO w) {
+		return TravelScore.weatherPenalty(w) <= TravelScore.OUTDOOR_MAX_PENALTY;
+	}
+
 	// 날씨 + 미세먼지 등급 → 추천 방향. 등급이 나쁨(3) 이상이면 실내 쪽으로 바꾸고 마스크 안내를 붙인다 (0 = 자료 없음)
 	public static RecommendVO recommend(WeatherVO w, int airGrade) {
 		RecommendVO r = recommend(w);
@@ -94,10 +106,27 @@ public class Recommender {
 			r.setMode(RecommendVO.INDOOR);
 			r.setTitle("실내 관광지 위주로 추천해요");
 			r.setReason("한파 수준 추위 (최고 " + max + "°)");
+		} else if (max <= COLD_MAX) {
+			r.setMode(RecommendVO.MIXED);
+			r.setTitle("쌀쌀해요, 실내와 실외를 섞어 다녀 보세요");
+			r.setReason("쌀쌀한 날씨 (최고 " + max + "°) · 따뜻하게 입고 실내에서 쉬어 가세요");
+		} else if (max >= 30) {
+			r.setMode(RecommendVO.MIXED);
+			r.setTitle("덥네요, 한낮엔 실내가 좋아요");
+			r.setReason("더운 날씨 (최고 " + max + "°) · 야외는 아침 · 저녁에");
 		} else if (w.getMaxPop() >= 30) {
 			r.setMode(RecommendVO.MIXED);
 			r.setTitle("실외·실내 모두 괜찮아요 (우산은 챙기기)");
 			r.setReason("비가 올 수도 있어요");
+		} else if (!outdoorOk(w)) {
+			r.setMode(RecommendVO.MIXED);
+			if (max <= COOL_MAX) {
+				r.setTitle("선선해요, 실내와 실외를 섞어 다녀 보세요");
+				r.setReason("선선한 날씨 (최고 " + max + "°) · 따뜻하게 입으세요");
+			} else {
+				r.setTitle("실외·실내 모두 괜찮아요");
+				r.setReason("기온이나 하늘 때문에 실외만 고집하진 않아도 돼요");
+			}
 		} else {
 			r.setMode(RecommendVO.OUTDOOR);
 			r.setTitle("실외 관광지 위주로 추천해요");
@@ -154,8 +183,14 @@ public class Recommender {
 			tip = spot.isIndoor() ? "더운 날 시원하게 둘러보기 좋은 실내예요." : "많이 더워요. 한낮은 피하고 아침·저녁에 가세요.";
 		} else if (max <= 0) {
 			tip = spot.isIndoor() ? "추운 날 들르기 좋은 실내예요." : "많이 추워요. 따뜻하게 입고 짧게 둘러보세요.";
+		} else if (max <= COLD_MAX) {
+			tip = spot.isIndoor() ? "쌀쌀한 날 들르기 좋은 실내예요." : "쌀쌀해요. 따뜻하게 입고 오래 머물지는 마세요.";
+		} else if (max >= 30) {
+			tip = spot.isIndoor() ? "더운 날 시원하게 둘러보기 좋은 실내예요." : "더워요. 한낮은 피하고 아침·저녁에 가세요.";
 		} else if (w.getMaxPop() >= 30) {
 			tip = spot.isIndoor() ? "날씨와 상관없이 즐길 수 있는 실내예요." : "비 올 수도 있어요. 접는 우산을 챙기세요.";
+		} else if (!outdoorOk(w)) {
+			tip = spot.isIndoor() ? "선선한 날 들르기 좋은 실내예요." : "선선하거나 흐려요. 따뜻하게 입고 다니세요.";
 		} else {
 			tip = spot.isIndoor() ? "날씨가 좋으니 근처 실외 명소와 같이 들러 보세요." : "야외 관광하기 좋은 날씨예요.";
 		}

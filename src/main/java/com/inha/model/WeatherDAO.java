@@ -149,6 +149,7 @@ public class WeatherDAO {
 		w.setMaxPop(maxPop);
 		w.setHours(hours);
 		w.setPartial(dayOffset == 0 && Integer.parseInt(firstTime.substring(0, 2)) > 6);
+		w.setMaxFromHours(w.isPartial() && tmxVal == null); // 늦게 열면 그날 TMX 가 응답에 없을 수 있다
 
 		boolean rainy = worstPty > 0 || maxPop >= 60;
 		w.setRainy(rainy);

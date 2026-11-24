@@ -22,6 +22,7 @@ public class WeatherVO {
 	private boolean rainy;      // 비/눈 예보가 있나 (강수형태 있음 또는 강수확률 60% 이상)
 	private String rainTime;    // 비가 시작되는 시각 (예: "15시")
 	private boolean partial;    // 오늘이라 지난 시간은 빠졌나
+	private boolean maxFromHours; // 최고기온이 기상청 값이 아니라 남은 시간의 기온에서 뽑은 값인가
 	private List<HourVO> hours = new ArrayList<>();
 
 	public String getTempRange() {
@@ -61,6 +62,8 @@ public class WeatherVO {
 	public void setRainTime(String rainTime) { this.rainTime = rainTime; }
 	public boolean isPartial() { return partial; }
 	public void setPartial(boolean partial) { this.partial = partial; }
+	public boolean isMaxFromHours() { return maxFromHours; }
+	public void setMaxFromHours(boolean maxFromHours) { this.maxFromHours = maxFromHours; }
 	public List<HourVO> getHours() { return hours; }
 	public void setHours(List<HourVO> hours) { this.hours = hours; }
 }
