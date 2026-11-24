@@ -93,7 +93,7 @@
 		if (!hasMap || map) return;
 		mapBox.hidden = false;
 		root.classList.add('has-map');
-		map = T.create(mapBox, { wheel: false });
+		map = T.create(mapBox);
 		map.setView([fb.lat, fb.lon], 12, { animate: false });
 	}
 

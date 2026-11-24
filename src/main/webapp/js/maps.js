@@ -33,10 +33,11 @@
 	};
 
 	// 지도 만들기: 모바일에서는 한 손가락 끌기를 꺼서 화면 스크롤을 막지 않는다
+	// 휠 확대는 기본으로 켬 (지도 위에 마우스 있을 때만 먹음)
 	TWMap.create = function (box, opts) {
 		opts = opts || {};
 		var map = L.map(box, {
-			scrollWheelZoom: !!opts.wheel,
+			scrollWheelZoom: opts.wheel !== false,
 			dragging: opts.drag !== undefined ? opts.drag : !L.Browser.mobile,
 			zoomControl: true
 		});
