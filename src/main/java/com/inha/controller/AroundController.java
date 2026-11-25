@@ -31,6 +31,7 @@ import com.inha.model.RoadRoute;
 import com.inha.model.TravelScore;
 import com.inha.model.GridConverter;
 import com.inha.model.MapJson;
+import com.inha.model.Geo;
 import com.inha.model.NearbyRoute;
 import com.inha.model.RateLimiter;
 import com.inha.model.RecommendVO;
@@ -69,7 +70,8 @@ public class AroundController extends HttpServlet {
 			return;
 		}
 
-		// ② 파라미터 확인 (한국 범위만, 소수 2자리로 반올림 → 같은 동네 반복 클릭은 캐시에 맞는다)
+		// ② 파라미터 확인 (한국 범위만, API 조회는 소수 2자리로 반올림 → 같은 동네 반복 클릭은 캐시에 맞는다
+		//    거리 · 동선은 누른 자리 그대로 잰다. 반올림한 점은 최대 0.6km 옆이라 순서가 틀어짐)
 		double lat, lon;
 		try {
 			lat = Double.parseDouble(request.getParameter("lat"));
@@ -83,6 +85,7 @@ public class AroundController extends HttpServlet {
 			write(response, 400, error("OUT_OF_RANGE", "한국 안(위도 33~39, 경도 124~132)만 조회할 수 있어요."));
 			return;
 		}
+		final double atLat = lat, atLon = lon; // 누른 자리
 		lat = Math.round(lat * 100) / 100.0;
 		lon = Math.round(lon * 100) / 100.0;
 
@@ -125,7 +128,7 @@ public class AroundController extends HttpServlet {
 			if (f14 != null) { try { b = ApiClient.await(f14); } catch (ApiException e) { tourErr = e; } }
 			boolean tourFailed = (f12 == null || a == null) && (f14 == null || b == null);
 
-			List<TourVO> spots = TourDAO.mergeByDist(a, b, "", MAX_SPOTS);
+			List<TourVO> spots = TourDAO.mergeByDist(a, b, "", Integer.MAX_VALUE); // 자르는 건 거리 다시 잰 뒤에
 			boolean supplemented = false;
 			if (!tourFailed && spots.size() < SPARSE_BELOW) {
 				// 위치기반 조회가 관광지 · 문화시설을 거의 못 찾는다 → 가까운 지역 목록에서 거리를 재서 보충
@@ -135,9 +138,12 @@ public class AroundController extends HttpServlet {
 					spots = new ArrayList<>(spots);
 					spots.addAll(extra);
 					spots.sort((x, y) -> Integer.compare(x.getDistM(), y.getDistM()));
-					if (spots.size() > MAX_SPOTS) spots = new ArrayList<>(spots.subList(0, MAX_SPOTS));
 				}
 			}
+			// 거리는 누른 자리 기준으로 다시 (API 가 준 거리는 반올림한 점 기준)
+			for (TourVO v : spots) v.setDistM((int) Math.round(Geo.distanceKm(atLat, atLon, v.getLat(), v.getLon()) * 1000));
+			spots.sort((x, y) -> Integer.compare(x.getDistM(), y.getDistM()));
+			if (spots.size() > MAX_SPOTS) spots = new ArrayList<>(spots.subList(0, MAX_SPOTS));
 
 			// ③-2 지역(시도 · 시군구)은 찾은 관광지의 법정동 코드로 안다. 새 API 자료는 따로 시작해 날씨와 겹쳐 기다린다
 			//      (RegionEvidence.load 는 풀 안에서 다른 작업을 기다리므로 「기다리는 작업」 전용 풀에서 돌린다)
@@ -248,7 +254,7 @@ public class AroundController extends HttpServlet {
 
 			// 5판: 여기서 출발하는 추천 동선 (이미 받은 목록만 쓴다 · 추가 호출 없음)
 			int sunsetMin = ev != null && ev.getSun() != null && ev.getSun().isHasTimes() ? ev.getSun().getSunsetMinutes() : -1;
-			NearbyRoute.Result route = NearbyRoute.plan(spots, lat, lon, fDay, LocalTime.now(ZoneId.of("Asia/Seoul")), sunsetMin);
+			NearbyRoute.Result route = NearbyRoute.plan(spots, atLat, atLon, fDay, LocalTime.now(ZoneId.of("Asia/Seoul")), sunsetMin);
 			if (route.isAvailable()) { // 관광지 사이만 실제 길로 (누른 곳 · 내 위치는 바깥 길 찾기 서버로 보내지 않는다)
 				List<double[]> pts = new ArrayList<>();
 				for (NearbyRoute.Stop st : route.getStops()) pts.add(new double[] { st.getSpot().getLat(), st.getSpot().getLon() });
